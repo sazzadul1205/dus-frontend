@@ -1,4 +1,4 @@
-// resources/js/Pages/Frontend/Blogs/Blogs.jsx
+// dus-frontend/src/pages/Blogs/Blogs.jsx
 
 import DynamicPage from '../DynamicPage';
 

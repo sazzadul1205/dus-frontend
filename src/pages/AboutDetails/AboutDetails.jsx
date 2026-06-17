@@ -1,60 +1,55 @@
-// resources/js/Pages/Frontend/AboutDetails/AboutDetails.jsx
+// dus-frontend/src/pages/ProjectsAndProgramsDetails/ProjectsAndProgramsDetails.jsx
 
-import React from 'react';
-import { Head } from "@inertiajs/react";
-import PublicLayout from '../../../layouts/PublicLayout';
-import DynamicSectionRenderer from '../../../components/Shared/DynamicSectionRenderer';
+// React
+import { Helmet } from 'react-helmet-async';
 
-// Special ContentSection component (fixed)
-const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
+// Layout
+import PublicLayout from '../../Layout/PublicLayout';
+
+// Dynamic Section Renderer
+import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
+
+// Program Content Section Component
+const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
   const renderHTML = (htmlString) => ({ __html: htmlString });
 
-  const data = subPageData || {};
-  const { title, content, image, btn } = data;
+  const data = programData || window.programData;
+  if (!data) return null;
 
-  if (!title && !content) return null;
+  const content = data.fullContentHtml || data.fullContent || data?.content;
 
   return (
     <section id={sectionId} className={`${bgColor || ''} ${paddingY || ''} ${paddingX || ''} ${sectionClassName || ''}`}>
-      {title && (
-        <h1 className='font-700 text-[28px] sm:text-[36px] md:text-[48px] lg:text-[64px] xl:text-[80px] leading-tight pb-12.5'>
-          {title}
-        </h1>
-      )}
-      {image && (
+      <h1 className='font-700 text-[28px] sm:text-[36px] md:text-[48px] lg:text-[64px] xl:text-[80px] leading-tight pb-12.5'>
+        {data?.title}
+      </h1>
+
+      {data?.image && (
         <div className="mb-6 sm:mb-8 md:mb-10 lg:mb-12.5">
           <img
-            src={image}
-            alt={title || 'About image'}
+            src={data.image}
+            alt={data?.title || 'Program image'}
             className="w-full h-auto max-h-64 sm:max-h-80 md:max-h-96 lg:max-h-125 object-cover rounded-2xl"
           />
         </div>
       )}
-      {content && (
-        <div
-          className="bricolage-grotesque prose prose-lg max-w-none
-            prose-headings:font-700 prose-headings:text-[#080C14] 
-            prose-p:text-[#333333] prose-p:leading-relaxed prose-p:mb-4
-            prose-ul:text-[#333333] prose-ul:leading-relaxed
-            prose-li:text-[#333333] prose-li:leading-relaxed
-            prose-strong:text-[#009BE2]
-            prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
-            prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
-          dangerouslySetInnerHTML={renderHTML(content)}
-        />
-      )}
-      {btn && btn.text && btn.link && (
-        <div className="mt-8">
-          <a href={btn.link} className="inline-block bg-[#009BE2] text-white font-600 px-8 py-4 rounded-lg hover:bg-[#007BB5] transition-colors">
-            {btn.text}
-          </a>
-        </div>
-      )}
+
+      <div
+        className="bricolage-grotesque prose prose-lg max-w-none
+          prose-headings:font-700 prose-headings:text-[#080C14] 
+          prose-p:text-[#333333] prose-p:leading-relaxed prose-p:mb-4
+          prose-ul:text-[#333333] prose-ul:leading-relaxed
+          prose-li:text-[#333333] prose-li:leading-relaxed
+          prose-strong:text-[#009BE2]
+          prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
+          prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
+        dangerouslySetInnerHTML={renderHTML(content)}
+      />
     </section>
   );
 };
 
-const AboutDetails = ({
+const ProjectsAndProgramsDetails = ({
   topBarData,
   navbarData,
   footerData,
@@ -71,9 +66,16 @@ const AboutDetails = ({
   const dynamicSections = allSections.filter(section => section.isFixedSection !== true)
     .sort((a, b) => a.order - b.order);
 
+    
   // Find specific sections for ordering
   const bannerSection = dynamicSections.find(s => s.component === 'PageBannerSection');
   const otherDynamicSections = dynamicSections.filter(s => s.component !== 'PageBannerSection');
+
+  // Get program data for SEO
+  const programData = pageData.programContentData || {};
+  const pageTitle = programData?.title || 'Program';
+  const metaDescription = programData?.metaDescription || programData?.excerpt || 'Learn more about our programs and projects at Dwip Unnayan Society';
+  const ogImage = programData?.image || programData?.ogImage || '';
 
   return (
     <PublicLayout
@@ -82,7 +84,19 @@ const AboutDetails = ({
       footerData={footerData}
       storageUrl={storageUrl}
     >
-      <Head title={`${pageData.contentSectionData?.title || 'About'} | DUS - Dwip Unnayan Society`} />
+      <Helmet>
+        <title>{`${pageTitle} | DUS - Dwip Unnayan Society`}</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={`${pageTitle} | DUS - Dwip Unnayan Society`} />
+        <meta property="og:description" content={metaDescription} />
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={`${window.location.origin}/programs/${slug || ''}`} />
+        <link rel="canonical" href={`${window.location.origin}/programs/${slug || ''}`} />
+        {programData?.tags && programData.tags.length > 0 && (
+          <meta name="keywords" content={programData.tags.join(', ')} />
+        )}
+      </Helmet>
 
       {/* 1. Banner (first dynamic section) */}
       {bannerSection && (
@@ -94,13 +108,14 @@ const AboutDetails = ({
         />
       )}
 
-      {/* 2. All Fixed Sections (ContentSection, etc.) */}
+      {/* 2. All Fixed Sections (ProgramContentSection, etc.) */}
       {fixedSections.map((section) => {
-        if (section.component === 'ContentSection') {
+        if (section.component === 'ProgramContentSection') {
           return (
-            <ContentSection
+            <ProgramContentSection
               key={section.id}
-              subPageData={pageData.contentSectionData}
+              programData={pageData.programContentData}
+              slug={slug}
               {...section.customProps}
             />
           );
@@ -122,4 +137,4 @@ const AboutDetails = ({
   );
 };
 
-export default AboutDetails;
+export default ProjectsAndProgramsDetails;

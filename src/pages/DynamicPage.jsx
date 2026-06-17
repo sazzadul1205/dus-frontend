@@ -1,9 +1,12 @@
-// resources/js/Pages/Frontend/DynamicPage.jsx
+// dus-frontend/src/pages/DynamicPage.jsx
 
-import React from 'react';
-import { Head } from "@inertiajs/react";
+import { Helmet } from 'react-helmet-async';
+
+// layout
 import PublicLayout from "../../layouts/PublicLayout";
-import DynamicSectionRenderer from '../../components/Shared/DynamicSectionRenderer';
+
+// Components
+import DynamicSectionRenderer from '../Shared/DynamicSectionRenderer';
 
 const DynamicPage = ({
   topbarData,
@@ -26,7 +29,9 @@ const DynamicPage = ({
       footerData={footerData}
       storageUrl={storageUrl}
     >
-      <Head title={pageTitle || "DUS - Dwip Unnayan Society | Empowering Communities"} />
+      <Helmet>
+        <title>{pageTitle || "DUS - Dwip Unnayan Society | Empowering Communities"}</title>
+      </Helmet>
 
       {sectionsToRender.length === 0 && (
         <div className="mx-auto max-w-5xl px-4 py-16 text-center text-slate-500">

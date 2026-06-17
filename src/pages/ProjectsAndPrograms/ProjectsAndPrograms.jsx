@@ -1,4 +1,4 @@
-// resources/js/Pages/Frontend/ProjectsAndPrograms/ProjectsAndPrograms.jsx
+// dus-frontend/src/pages/ProjectsAndPrograms/ProjectsAndPrograms.jsx
 
 import DynamicPage from '../DynamicPage';
 

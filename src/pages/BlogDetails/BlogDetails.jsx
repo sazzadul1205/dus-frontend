@@ -1,14 +1,22 @@
-// resources/js/Pages/Frontend/BlogDetails/BlogDetails.jsx
+// dus-frontend/src/pages/BlogDetails/BlogDetails.jsx
 
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+
+// React
+import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+
+// Icons
 import { CiCalendar } from "react-icons/ci";
 import { FaRegClock, FaFacebookF, FaLinkedinIn, FaInstagram } from "react-icons/fa";
-import PublicLayout from '../../../layouts/PublicLayout';
-import DynamicSectionRenderer from '../../../components/Shared/DynamicSectionRenderer';
+
+// Layout
+import PublicLayout from '../../Layout/PublicLayout';
+
+// Dynamic Section Renderer
+import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
 // Banner Section Component
-const BannerSection = ({ bannerData, blogData, storageUrl }) => {
+const BannerSection = ({ bannerData, blogData }) => {
   const tagColors = [
     "bg-[#3866FF]", "bg-[#503AF2]", "bg-[#00B894]",
     "bg-[#FF6B6B]", "bg-[#FDCB6E]", "bg-[#6C5CE7]",
@@ -60,7 +68,7 @@ const BannerSection = ({ bannerData, blogData, storageUrl }) => {
               <div className="absolute inset-0 bg-[#503AF2]/40" />
             </div>
             <p className="flex items-center">
-              BY : <Link className="underline pl-1">{blogData?.createdBy || 'ADMIN'}</Link>
+              BY : <Link to="/author" className="underline pl-1">{blogData?.createdBy || 'ADMIN'}</Link>
             </p>
           </div>
 
@@ -185,7 +193,16 @@ const BlogDetails = ({
       footerData={footerData}
       storageUrl={storageUrl}
     >
-      <Head title={`${pageData.blogData?.title || 'Blog Details'} | DUS - Dwip Unnayan Society | Empowering Communities`} />
+      <Helmet>
+        <title>{`${pageData.blogData?.title || 'Blog Details'} | DUS - Dwip Unnayan Society | Empowering Communities`}</title>
+        <meta name="description" content={pageData.blogData?.metaDescription || pageData.blogData?.excerpt || 'Read our latest blog post'} />
+        <meta property="og:title" content={pageData.blogData?.title || 'Blog Details'} />
+        <meta property="og:description" content={pageData.blogData?.metaDescription || pageData.blogData?.excerpt || ''} />
+        {pageData.blogData?.image && (
+          <meta property="og:image" content={pageData.blogData.image} />
+        )}
+        <link rel="canonical" href={`${window.location.origin}/blog/${slug}`} />
+      </Helmet>
 
       {sectionsToRender.map((section) => {
         if (section.isSpecialComponent) {
