@@ -25,7 +25,6 @@ const iconMap = {
 };
 
 const Footer = ({ footerData }) => {
-  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURN
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');

@@ -2,6 +2,7 @@
 
 
 // React
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
@@ -153,9 +154,12 @@ const BlogDetails = ({
   slug,
   ...pageData
 }) => {
-  const sectionsToRender = (sectionConfig?.sections || [])
-    .filter(section => section.enabled === true)
-    .sort((a, b) => a.order - b.order);
+  const sectionsToRender = useMemo(() =>
+    (sectionConfig?.sections || [])
+      .filter(section => section.enabled === true)
+      .sort((a, b) => a.order - b.order),
+    [sectionConfig]
+  );
 
   const renderSpecialComponent = (section) => {
     const { component, customProps = {} } = section;

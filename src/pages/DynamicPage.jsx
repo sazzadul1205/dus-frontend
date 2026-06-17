@@ -1,5 +1,7 @@
 // dus-frontend/src/pages/DynamicPage.jsx
 
+// React
+import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 // layout
@@ -18,9 +20,12 @@ const DynamicPage = ({
   ...pageData
 }) => {
   // Get enabled sections sorted by order
-  const sectionsToRender = (sectionConfig?.sections || [])
-    .filter(section => section.enabled === true)
-    .sort((a, b) => a.order - b.order);
+  const sectionsToRender = useMemo(() =>
+    (sectionConfig?.sections || [])
+      .filter(section => section.enabled === true)
+      .sort((a, b) => a.order - b.order),
+    [sectionConfig]
+  );
 
   return (
     <PublicLayout
