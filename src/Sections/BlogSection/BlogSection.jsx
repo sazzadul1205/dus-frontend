@@ -1,15 +1,12 @@
-// js/Sections/BlogSection/BlogSection.jsx
+// dus-frontend/src/Sections/BlogSection/BlogSection.jsx
 
-// React
-import React from 'react';
-
-// Inertia
-import { Link } from '@inertiajs/react';
+// React Router
+import { Link } from 'react-router-dom';
 
 // Components
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -19,15 +16,20 @@ const hasValue = (value) => {
 };
 
 const BlogSection = ({
-  mainBlog,
-  blogPosts,
-  sectionTitle = null,
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-10 sm:py-15 md:py-20 lg:py-37.5',
   paddingX = 'px-5 sm:px-8 md:px-12 lg:px-50',
   sectionClassName = '',
   sectionId = 'blog-section',
 }) => {
+  // Safe destructuring with defaults
+  const {
+    mainBlog = null,
+    blogPosts = [],
+    sectionTitle = null,
+  } = data || {};
+
   // Check if main blog exists and has required fields
   const hasMainBlog = hasValue(mainBlog) && hasValue(mainBlog.title) && hasValue(mainBlog.image);
   const hasBlogPosts = hasValue(blogPosts) && blogPosts.length > 0;
@@ -36,6 +38,13 @@ const BlogSection = ({
   if (!hasMainBlog && !hasBlogPosts) {
     return null;
   }
+
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/600x400/009BE2/FFFFFF?text=Blog+Post';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
 
   return (
     <section
@@ -57,7 +66,7 @@ const BlogSection = ({
           {/* Main Blog Image */}
           {hasValue(mainBlog.image) && (
             <img
-              src={mainBlog.image}
+              src={getImageUrl(mainBlog.image)}
               alt={mainBlog.title || "Main blog image"}
               className="w-full lg:w-187.5 h-auto lg:h-112.5 object-cover object-center rounded-2xl"
             />
@@ -89,7 +98,7 @@ const BlogSection = ({
             {/* Button */}
             {hasValue(mainBlog.slug) && (
               <Link
-                href={`/blogs/${mainBlog.slug}`}
+                to={`/blogs/${mainBlog.slug}`}
                 className="mt-4 sm:mt-6 bricolage-grotesque flex items-center gap-2 font-500 lg:font-600 text-[14px] sm:text-[16px] lg:text-[20px] text-[#009BE2] group hover:text-[#080C14] transition-colors duration-300 w-fit"
               >
                 Read more
@@ -108,7 +117,7 @@ const BlogSection = ({
               {/* Post Image */}
               {hasValue(post.image) && (
                 <img
-                  src={post.image}
+                  src={getImageUrl(post.image)}
                   alt={post.title || "Blog post image"}
                   className="w-full h-48 sm:h-56 md:h-62.5 object-cover object-center rounded-2xl mb-4 sm:mb-5"
                 />
@@ -138,7 +147,7 @@ const BlogSection = ({
               {/* Post Button */}
               {hasValue(post.slug) && (
                 <Link
-                  href={`/blogs/${post.slug}`}
+                  to={`/blogs/${post.slug}`}
                   className="mt-3 sm:mt-4 bricolage-grotesque flex items-center gap-2 font-500 text-[14px] sm:text-[15px] lg:text-[16px] text-[#009BE2] group hover:text-[#080C14] transition-colors duration-300 w-fit"
                 >
                   Read more

@@ -3,7 +3,6 @@ import { lazy } from 'react';
 
 // ============================================
 // SECTION REGISTRY - All available sections
-// Add new sections here once and use everywhere
 // ============================================
 
 export const SECTION_COMPONENTS = {
@@ -33,30 +32,29 @@ export const SECTION_COMPONENTS = {
 
 // Section configurations - defines how each section receives its props
 export const SECTION_CONFIGS = {
-  // Single prop sections
-  FAQSection: { propName: 'faqData', isMultiProp: false },
-  JobsSection: { propName: 'jobsData', isMultiProp: false },
-  HomeBanner: { propName: 'bannerData', isMultiProp: false },
-  CardsSection: { propName: 'cardsData', isMultiProp: false },
-  LegalSection: { propName: 'legalData', isMultiProp: false },
+  // ALL sections now use 'data' as the prop name
+  FAQSection: { propName: 'data', isMultiProp: false },
+  JobsSection: { propName: 'data', isMultiProp: false },
+  HomeBanner: { propName: 'data', isMultiProp: false },
+  PageBannerSection: { propName: 'data', isMultiProp: false },
+  CardsSection: { propName: 'data', isMultiProp: false },
+  LegalSection: { propName: 'data', isMultiProp: false },
   HeroFigureSection: { propName: 'data', isMultiProp: false },
-  ContactReachSection: { propName: 'image', isMultiProp: false },
-  AboutUsSection: { propName: 'aboutUsData', isMultiProp: false },
-  StoriesSection: { propName: 'storiesData', isMultiProp: false },
-  FollowUSSection: { propName: 'socialItems', isMultiProp: false },
-  OurActionSection: { propName: 'actionData', isMultiProp: false },
-  WhereWeWorkSection: { propName: 'workData', isMultiProp: false },
-  PageBannerSection: { propName: 'bannerData', isMultiProp: false },
-  ContactOfficeSection: { propName: 'offices', isMultiProp: false },
-  AddressSection: { propName: 'officesLocation', isMultiProp: false },
-  ProgramImpactSection: { propName: 'impactData', isMultiProp: false },
-  OurProgramsSection: { propName: 'programsData', isMultiProp: false },
-  UpcomingEventsSection: { propName: 'eventsData', isMultiProp: false },
+  ContactReachSection: { propName: 'data', isMultiProp: false },
+  AboutUsSection: { propName: 'data', isMultiProp: false },
+  StoriesSection: { propName: 'data', isMultiProp: false },
+  FollowUSSection: { propName: 'data', isMultiProp: false },
+  OurActionSection: { propName: 'data', isMultiProp: false },
+  WhereWeWorkSection: { propName: 'data', isMultiProp: false },
+  ContactOfficeSection: { propName: 'data', isMultiProp: false },
+  AddressSection: { propName: 'data', isMultiProp: false },
+  ProgramImpactSection: { propName: 'data', isMultiProp: false },
+  OurProgramsSection: { propName: 'data', isMultiProp: false },
+  UpcomingEventsSection: { propName: 'data', isMultiProp: false },
   
-  // Multi-prop sections (need special handling)
+  // Multi-prop sections (BlogSection needs special handling)
   BlogSection: { 
     isMultiProp: true, 
-    props: ['mainBlog', 'blogPosts'],
-    defaultProps: { sectionTitle: null }
+    props: ['mainBlog', 'blogPosts', 'sectionTitle'],
   },
 };

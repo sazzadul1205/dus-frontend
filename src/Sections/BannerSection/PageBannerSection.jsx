@@ -1,9 +1,6 @@
-// js/Sections/BannerSection/PageBannerSection.jsx
+// dus-frontend/src/Sections/BannerSection/PageBannerSection.jsx
 
-// React
-import React from 'react';
-
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -13,7 +10,7 @@ const hasValue = (value) => {
 };
 
 const PageBannerSection = ({
-  bannerData,
+  data,
   bgColor = '',
   height = 'h-125 md:h-147.25',
   paddingY = '',
@@ -21,17 +18,17 @@ const PageBannerSection = ({
   sectionClassName = '',
   sectionId = 'page-banner',
 }) => {
-  // Early return if no data (SAME pattern)
-  if (!hasValue(bannerData)) {
+  // Early return if no data
+  if (!hasValue(data)) {
     return null;
   }
 
-  // Safe destructuring with defaults (SAME pattern)
+  // Safe destructuring with defaults
   const {
     background = {},
     overlay = {},
     content = {},
-  } = bannerData;
+  } = data;
 
   const title = content.title || {};
   const description = content.description || {};
@@ -48,6 +45,13 @@ const PageBannerSection = ({
     return null;
   }
 
+  // Get background image URL with fallback
+  const getBackgroundUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/1920x400/080C14/FFFFFF?text=Page+Banner';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
       id={sectionId}
@@ -56,7 +60,7 @@ const PageBannerSection = ({
       {/* Background Image - Only render if src exists */}
       {hasValue(background.src) && (
         <img
-          src={background.src}
+          src={getBackgroundUrl(background.src)}
           alt={background.alt || 'Banner background'}
           className="w-full h-full object-cover object-center md:object-cover"
         />

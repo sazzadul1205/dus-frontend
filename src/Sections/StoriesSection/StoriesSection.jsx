@@ -1,10 +1,11 @@
-// js/Sections/StoriesSection/StoriesSection.jsx
+// dus-frontend/src/Sections/StoriesSection/StoriesSection.jsx
 
 // React
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // Arrow Icon
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -16,12 +17,14 @@ const hasValue = (value) => {
 };
 
 const StoriesSection = ({
-  storiesData,
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-12 sm:py-16 md:py-25 lg:py-37.5',
+  // eslint-disable-next-line no-unused-vars
+  paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'stories',
 }) => {
-  // Refs for DOM elements and drag state
   const scrollContainerRef = useRef(null);
   const startX = useRef(0);
   const scrollLeftStart = useRef(0);
@@ -29,28 +32,6 @@ const StoriesSection = ({
 
   // State only for cursor styling (triggers re-render)
   const [dragging, setDragging] = useState(false);
-
-  // Don't render if no data
-  if (!hasValue(storiesData)) {
-    return null;
-  }
-
-  // Safe destructuring with defaults
-  const {
-    section = {},
-    stories = []
-  } = storiesData;
-
-  // Check if there's any content to display
-  const hasTitle = hasValue(section.title);
-  const hasDescription = hasValue(section.description);
-  const hasStories = hasValue(stories);
-
-  const hasAnyContent = hasTitle || hasDescription || hasStories;
-
-  if (!hasAnyContent) {
-    return null;
-  }
 
   // Set up drag-to-scroll event listeners
   useEffect(() => {
@@ -133,9 +114,38 @@ const StoriesSection = ({
     };
   }, []);
 
+  // Don't render if no data
+  if (!hasValue(data)) {
+    return null;
+  }
+
+  // Safe destructuring with defaults
+  const {
+    section = {},
+    stories = []
+  } = data;
+
+  // Check if there's any content to display
+  const hasTitle = hasValue(section.title);
+  const hasDescription = hasValue(section.description);
+  const hasStories = hasValue(stories);
+
+  const hasAnyContent = hasTitle || hasDescription || hasStories;
+
+  if (!hasAnyContent) {
+    return null;
+  }
+
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/400x300/009BE2/FFFFFF?text=Story';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
-      id='stories'
+      id={sectionId}
       className={`${bgColor} ${paddingY} ${sectionClassName}`}
     >
       {/* Section Header - Only show if title or description exists */}
@@ -181,7 +191,7 @@ const StoriesSection = ({
                 {/* Story Image */}
                 {hasValue(story.image) && (
                   <img
-                    src={story.image}
+                    src={getImageUrl(story.image)}
                     alt={story.title || "Story image"}
                     className='h-48 sm:h-56 md:h-72 lg:h-86.75 rounded-2xl mx-auto object-cover w-full'
                   />
@@ -210,17 +220,13 @@ const StoriesSection = ({
                   )}
 
                   {/* Read More Button */}
-                  <button
-                    onClick={() => {
-                      if (story.link) {
-                        window.location.href = story.link;
-                      }
-                    }}
+                  <Link
+                    to={story.link || '#'}
                     className="bricolage-grotesque text-[#009BE2] font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-2 sm:gap-3 group hover:text-[#009BE2]/70 transition-all duration-300 whitespace-nowrap"
                   >
                     Read More
                     <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}

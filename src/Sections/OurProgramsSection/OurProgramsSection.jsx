@@ -1,10 +1,11 @@
-// js/Sections/OurProgramsSection/OurProgramsSection.jsx
+// dus-frontend/src/Sections/OurProgramsSection/OurProgramsSection.jsx
 
 // React
-import React, { useRef, useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
+import React, { useRef, useEffect, useState } from 'react';
 
 // Arrow Icon
-import ArrowIcon from "../../components/Shared/ArrowIcon";
+import ArrowIcon from "../../Shared/ArrowIcon";
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -16,17 +17,64 @@ const hasValue = (value) => {
 };
 
 const OurProgramsSection = ({
-  programsData,
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-12 sm:py-16 lg:py-20',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'our-programs',
 }) => {
   const [visibleCards, setVisibleCards] = useState([]);
   const cardsRef = useRef([]);
 
-  // Don't render if no data
-  if (!hasValue(programsData)) {
+  // Detect when cards are in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const cardId = parseInt(entry.target.getAttribute("data-id"));
+
+          if (entry.isIntersecting) {
+            setVisibleCards((prev) => {
+              if (!prev.includes(cardId)) {
+                return [...prev, cardId];
+              }
+              return prev;
+            });
+          }
+        });
+      },
+      {
+        threshold: 0.25,
+      }
+    );
+
+    cardsRef.current.forEach((card) => {
+      if (card) observer.observe(card);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Early return if no data
+  if (!hasValue(data)) {
+    return null;
+  }
+
+  // Safe destructuring with defaults
+  const {
+    section = {},
+    programs = []
+  } = data;
+
+  const hasTitle = hasValue(section.title);
+  const hasDescription = hasValue(section.description);
+  const hasButton = hasValue(section.button?.text);
+
+  const showHeader = hasTitle || hasDescription || hasButton;
+  const hasPrograms = hasValue(programs);
+
+  if (!showHeader && !hasPrograms) {
     return null;
   }
 
@@ -57,57 +105,17 @@ const OurProgramsSection = ({
     return `<p class="font-400 text-[16px] sm:text-[18px] lg:text-[20px] text-[#524B48] leading-relaxed">${truncatedText}</p>`;
   };
 
-  // Function to handle card visibility
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const cardId = parseInt(entry.target.getAttribute("data-id"));
-
-          if (entry.isIntersecting) {
-            setVisibleCards((prev) => {
-              if (!prev.includes(cardId)) {
-                return [...prev, cardId];
-              }
-              return prev;
-            });
-          }
-        });
-      },
-      {
-        threshold: 0.25,
-      }
-    );
-
-    cardsRef.current.forEach((card) => {
-      if (card) observer.observe(card);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Safe destructuring with defaults
-  const {
-    section = {},
-    programs = []
-  } = programsData;
-
-  const hasTitle = hasValue(section.title);
-  const hasDescription = hasValue(section.description);
-  const hasButton = hasValue(section.button?.text);
-
-  const showHeader = hasTitle || hasDescription || hasButton;
-  const hasPrograms = hasValue(programs);
-
-  if (!showHeader && !hasPrograms) {
-    return null;
-  }
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/600x400/009BE2/FFFFFF?text=Program';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
 
   return (
     <section
-      id="our-programs"
+      id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
-      
     >
       {/* Header - Only show if there's header content */}
       {showHeader && (
@@ -132,17 +140,13 @@ const OurProgramsSection = ({
 
           {/* Section Button */}
           {hasButton && (
-            <button
-              onClick={() => {
-                if (section.button?.link) {
-                  window.location.href = section.button.link;
-                }
-              }}
+            <Link
+              to={section.button?.link || '#'}
               className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-4 lg:py-5 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap"
             >
               {section.button.text}
               <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-            </button>
+            </Link>
           )}
         </div>
       )}
@@ -211,13 +215,13 @@ const OurProgramsSection = ({
 
                       {/* Program Link/Button */}
                       {hasValue(program.link) && (
-                        <button
-                          onClick={() => window.location.href = program.link}
+                        <Link
+                          to={program.link}
                           className="mt-6 bricolage-grotesque flex items-center gap-2 font-500 lg:font-600 text-[16px] sm:text-[17px] lg:text-[20px] text-[#009BE2] group hover:text-[#080C14] transition-colors duration-300 w-fit"
                         >
                           Read more
                           <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-                        </button>
+                        </Link>
                       )}
                     </div>
 
@@ -225,7 +229,7 @@ const OurProgramsSection = ({
                     {hasValue(program.image) && (
                       <div className="w-full lg:w-1/2">
                         <img
-                          src={program.image}
+                          src={getImageUrl(program.image)}
                           alt={program.title || "Program image"}
                           className=" w-full h-75 sm:h-100 lg:h-150 object-cover rounded-3xl hover:scale-105 transition-transform duration-300"
                         />

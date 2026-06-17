@@ -1,12 +1,12 @@
-// js/Sections/HeroFigureSection/HeroFigureSection.jsx
+// dus-frontend/src/Sections/HeroFigureSection/HeroFigureSection.jsx
 
 // React
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Components
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -16,7 +16,7 @@ const hasValue = (value) => {
 };
 
 const HeroFigureSection = ({
-  data,                   // Data object containing section content and image details
+  data,
   sectionId = 'hero-figure',
   layout = 'text-left',   // 'text-left' or 'text-right'
   bgColor = 'bg-white',   // Customizable background color
@@ -57,11 +57,25 @@ const HeroFigureSection = ({
     return { __html: htmlString };
   };
 
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=Hero+Image';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
+  // Get background image URL with fallback
+  const getBgImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   // Determine image position based on layout
   const isImageLeft = layout === 'text-right';
 
-  // Text content component
-  const TextContent = () => (
+  // Render text content
+  const renderTextContent = () => (
     <div className='w-full lg:w-1/2 flex flex-col justify-between relative z-10'>
       {/* Only render section title if it exists */}
       {hasTitle && (
@@ -92,24 +106,24 @@ const HeroFigureSection = ({
       {/* Render button if btn exists */}
       {hasButton && (
         <div className='pt-8'>
-          <button
-            onClick={() => window.location.href = btn.link}
+          <Link
+            to={btn.link}
             className='bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-4 py-3 sm:px-5 sm:py-3.5 lg:p-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300'
           >
             <span>{btn.text}</span>
             <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-          </button>
+          </Link>
         </div>
       )}
     </div>
   );
 
-  // Image component
-  const ImageComponent = () => (
+  // Render image
+  const renderImage = () => (
     hasImage && (
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0 relative z-10'>
         <img
-          src={image.src}
+          src={getImageUrl(image.src)}
           alt={image.alt || 'Section image'}
           className={image.className || 'w-full h-auto lg:h-full object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl'}
         />
@@ -119,9 +133,10 @@ const HeroFigureSection = ({
 
   // Generate background style
   const getBackgroundStyle = () => {
-    if (hasValue(bgImage)) {
+    const bgImageUrl = getBgImageUrl(bgImage);
+    if (hasValue(bgImageUrl)) {
       return {
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(${bgImageUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -144,13 +159,13 @@ const HeroFigureSection = ({
       <div className={`flex flex-col lg:flex-row justify-between items-stretch gap-8 lg:gap-15 relative z-10`}>
         {isImageLeft ? (
           <>
-            <ImageComponent />
-            <TextContent />
+            {renderImage()}
+            {renderTextContent()}
           </>
         ) : (
           <>
-            <TextContent />
-            <ImageComponent />
+            {renderTextContent()}
+            {renderImage()}
           </>
         )}
       </div>

@@ -1,12 +1,12 @@
-// js/Sections/LegalSection/LegalSection.jsx
+// dus-frontend/src/Sections/LegalSection/LegalSection.jsx
 
 // React
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Components
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -16,7 +16,7 @@ const hasValue = (value) => {
 };
 
 const LegalSection = ({
-  legalData,
+  data,
   bgColor = '',
   height = 'h-125 md:h-147.25',
   paddingY = '',
@@ -25,7 +25,7 @@ const LegalSection = ({
   sectionId = 'legal',
 }) => {
   // Early return if no data
-  if (!hasValue(legalData)) {
+  if (!hasValue(data)) {
     return null;
   }
 
@@ -34,7 +34,7 @@ const LegalSection = ({
     background = {},
     overlay = {},
     textBox = {}
-  } = legalData;
+  } = data;
 
   // Check if there's any content to display
   const hasBackground = hasValue(background.src);
@@ -48,6 +48,13 @@ const LegalSection = ({
     return null;
   }
 
+  // Get background image URL with fallback
+  const getBackgroundUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/1920x400/080C14/FFFFFF?text=Legal';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
       id={sectionId}
@@ -56,7 +63,7 @@ const LegalSection = ({
       {/* Background Image - Only render if src exists */}
       {hasValue(background.src) && (
         <img
-          src={background.src}
+          src={getBackgroundUrl(background.src)}
           alt={background.alt || 'Legal background'}
           className="w-full h-full object-cover object-center md:object-cover"
         />
@@ -86,13 +93,13 @@ const LegalSection = ({
           {/* Button */}
           {hasValue(textBox.buttonText) && hasValue(textBox.buttonLink) && (
             <div className='pt-6 md:pt-7 lg:pt-9'>
-              <button
-                onClick={() => window.location.href = textBox.buttonLink}
+              <Link
+                to={textBox.buttonLink}
                 className='bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-4 py-3 sm:px-5 sm:py-3.5 lg:p-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300'
               >
                 <span>{textBox.buttonText}</span>
                 <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-              </button>
+              </Link>
             </div>
           )}
         </div>

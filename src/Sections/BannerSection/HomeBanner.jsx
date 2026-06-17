@@ -1,10 +1,10 @@
-// js/Sections/BannerSection/HomeBanner.jsx
+// dus-frontend/src/Sections/BannerSection/HomeBanner.jsx
 
 // React
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Arrow Icon
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
 // Utility function for consistent value checking
 const hasValue = (value) => {
@@ -16,13 +16,14 @@ const hasValue = (value) => {
 };
 
 const HomeBanner = ({
-  bannerData,
+  data,
   bgColor = '',
   height = 'h-125 md:h-280',
   sectionClassName = '',
+  sectionId = 'banner',
 }) => {
-  // If bannerData doesn't exist, don't render anything
-  if (!hasValue(bannerData)) {
+  // If data doesn't exist, don't render anything
+  if (!hasValue(data)) {
     return null;
   }
 
@@ -32,7 +33,7 @@ const HomeBanner = ({
     overlay = {},
     content = {},
     buttons = []
-  } = bannerData;
+  } = data;
 
   // Check if there's any content to display
   const hasAnyContent = hasValue(content.tagline?.text) ||
@@ -40,15 +41,22 @@ const HomeBanner = ({
     hasValue(content.description?.text) ||
     hasValue(buttons);
 
+  // Get background image URL with fallback
+  const getBackgroundUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/1920x800/080C14/FFFFFF?text=DUS+Banner';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
-      id="banner"
+      id={sectionId}
       className={`relative w-full ${height} overflow-hidden ${bgColor} ${sectionClassName}`}
     >
       {/* Background Image - Only render if src exists */}
       {hasValue(background.src) && (
         <img
-          src={background.src}
+          src={getBackgroundUrl(background.src)}
           alt={background.alt || "Banner background"}
           className="w-full h-full object-cover object-center md:object-cover"
         />
@@ -97,20 +105,16 @@ const HomeBanner = ({
             {hasValue(buttons) && (
               <div className='flex flex-col sm:flex-row items-center gap-3 md:gap-6 pt-5 md:pt-7.5'>
                 {buttons.map((button) => (
-                  <button
-                    key={button.id || Math.random()}
-                    onClick={() => {
-                      if (button.link) {
-                        window.location.href = button.link;
-                      }
-                    }}
+                  <Link
+                    key={button.id || button.link || button.text}
+                    to={button.link || '#'}
                     className={`capitalize font-600 text-[14px] md:text-[18px] px-5 md:px-7.5 py-3 md:py-5 bricolage-grotesque rounded-md inline-flex items-center justify-center gap-2 md:gap-3 group transition-all duration-300 w-full sm:w-auto ${button.className || ''}`}
                   >
                     <span>{button.text}</span>
                     {button.icon && (
                       <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300 w-4 h-4 md:w-5 md:h-5" />
                     )}
-                  </button>
+                  </Link>
                 ))}
               </div>
             )}

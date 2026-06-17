@@ -1,6 +1,4 @@
-// js/Sections/WhereWeWorkSection/WhereWeWorkSection.jsx
-
-import React from 'react';
+// dus-frontend/src/Sections/WhereWeWorkSection/WhereWeWorkSection.jsx
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -11,23 +9,38 @@ const hasValue = (value) => {
 };
 
 const WhereWeWorkSection = ({
-  workData,
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-10 sm:py-15 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'where-we-work',
 }) => {
   // Early return if no data
-  if (!hasValue(workData)) return null;
+  if (!hasValue(data)) return null;
 
-  const { section = {}, stats = [], image = {} } = workData;
+  const { section = {}, stats = [], image = {} } = data;
 
   // Early return if no content
   if (!section.title && !stats.length && !image.src) return null;
 
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=Where+We+Work';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
+  // Get icon URL with fallback
+  const getIconUrl = (iconPath) => {
+    if (!iconPath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Stat';
+    if (iconPath.startsWith('http')) return iconPath;
+    return iconPath;
+  };
+
   return (
     <section
-      id='where-we-work'
+      id={sectionId}
       className={`flex flex-col lg:flex-row justify-between ${bgColor} gap-8 lg:gap-15 ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       {/* Left Section - Text Content */}
@@ -51,7 +64,7 @@ const WhereWeWorkSection = ({
                 >
                   {stat.icon && (
                     <img
-                      src={stat.icon}
+                      src={getIconUrl(stat.icon)}
                       alt={stat.alt || stat.label || "Statistic icon"}
                       className='w-10 h-10 sm:w-12 sm:h-12 md:w-13 md:h-13 lg:w-15 lg:h-15 mx-auto mb-4 sm:mb-5 md:mb-6 lg:mb-7.5 group-hover:scale-110 transition-transform duration-300'
                     />
@@ -74,15 +87,13 @@ const WhereWeWorkSection = ({
       )}
 
       {/* Right Section - Image */}
-      {image.src && (
-        <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
-          <img
-            src={image.src}
-            alt={image.alt || "Where we work image"}
-            className={`${image.className || ''} w-full h-auto lg:h-232.5 object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
-          />
-        </div>
-      )}
+      <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
+        <img
+          src={getImageUrl(image.src)}
+          alt={image.alt || "Where we work image"}
+          className={`${image.className || ''} w-full h-auto lg:h-232.5 object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
+        />
+      </div>
     </section>
   );
 };

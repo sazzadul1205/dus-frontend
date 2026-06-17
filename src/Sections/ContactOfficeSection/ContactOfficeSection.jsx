@@ -1,12 +1,9 @@
-// js/Sections/ContactOfficeSection/ContactOfficeSection.jsx
-
-// React
-import React from 'react';
+// dus-frontend/src/Sections/ContactOfficeSection/ContactOfficeSection.jsx
 
 // Icons
-import { FaGraduationCap, FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaGraduationCap } from 'react-icons/fa';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -16,19 +13,31 @@ const hasValue = (value) => {
 };
 
 const ContactOfficeSection = ({
-  offices,
-  title = "Our Offices",
-  orgName = "Dwip Unnayan Songstha (DUS)",
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-10 sm:py-14 lg:py-37.5',
   paddingX = 'px-4 sm:px-6 lg:px-50',
   sectionClassName = '',
   sectionId = 'contact-offices',
 }) => {
+  // Safe destructuring with defaults
+  const {
+    offices = [],
+    title = "Our Offices",
+    orgName = "Dwip Unnayan Songstha (DUS)",
+  } = data || {};
+
   // Early return if no data
   if (!hasValue(offices) || offices.length === 0) {
     return null;
   }
+
+  // Get image URL with fallback for office icons if needed
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Office';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
 
   return (
     <section
@@ -49,8 +58,16 @@ const ContactOfficeSection = ({
               key={office.title || index}
               className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 md:p-10 lg:p-12.5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              {/* Icon */}
-              <FaGraduationCap className="text-4xl text-[#009BE2]" />
+              {/* Icon - Use custom icon if provided, otherwise use FaGraduationCap */}
+              {office.icon ? (
+                <img
+                  src={getImageUrl(office.icon)}
+                  alt={office.title || "Office icon"}
+                  className="w-12 h-12 object-contain"
+                />
+              ) : (
+                <FaGraduationCap className="text-4xl text-[#009BE2]" />
+              )}
 
               {/* Office Title */}
               {hasValue(office.title) && (

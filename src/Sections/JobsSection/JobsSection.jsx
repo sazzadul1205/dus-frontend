@@ -1,14 +1,15 @@
-// js/Sections/JobsSection/JobsSection.jsx
+// dus-frontend/src/Sections/JobsSection/JobsSection.jsx
 
 // React
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // React Icons
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { LuBriefcaseBusiness, LuClock4 } from "react-icons/lu";
 
 // Arrow Icon
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -20,17 +21,21 @@ const hasValue = (value) => {
 };
 
 const JobsSection = ({
-  jobsData,
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-12 sm:py-16 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-75',
   sectionClassName = '',
+  sectionId = 'jobs',
 }) => {
+  // Filter
+  const [selectedFilter, setSelectedFilter] = useState("");
+
   // Early return if no data
-  if (!hasValue(jobsData)) return null;
+  if (!hasValue(data)) return null;
 
   // Safe destructuring with defaults
-  const { section = {}, filter = {}, jobs = [] } = jobsData;
+  const { section = {}, filter = {}, jobs = [] } = data;
 
   // Check if there's any content to display
   const hasTitle = hasValue(section.title);
@@ -41,9 +46,6 @@ const JobsSection = ({
   const hasAnyContent = hasTitle || hasDescription || hasFilterOptions || hasJobs;
 
   if (!hasAnyContent) return null;
-
-  // Filters
-  const [selectedFilter, setSelectedFilter] = useState("");
 
   // Handle Filter
   const handleFilterChange = (e) => {
@@ -57,7 +59,7 @@ const JobsSection = ({
 
   return (
     <section
-      id='jobs'
+      id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       {/* Header Section */}
@@ -190,17 +192,13 @@ const JobsSection = ({
 
                 {/* Apply Button */}
                 <div className='w-full md:w-auto mt-4 md:mt-0'>
-                  <button
-                    onClick={() => {
-                      if (job.link) {
-                        window.location.href = job.link;
-                      }
-                    }}
+                  <Link
+                    to={job.link || '#'}
                     className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-3.5 lg:py-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center justify-center gap-2 sm:gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap w-full md:w-auto"
                   >
                     Apply Now
                     <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

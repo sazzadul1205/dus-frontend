@@ -1,10 +1,10 @@
-// js/Sections/AboutUsSection/AboutUsSection.jsx
+// dus-frontend/src/Sections/AboutUsSection/AboutUsSection.jsx
 
 // React
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Arrow Icon
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -16,14 +16,15 @@ const hasValue = (value) => {
 };
 
 const AboutUsSection = ({
-  aboutUsData,
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-10 sm:py-15 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'about-us',
 }) => {
   // Don't render if no data
-  if (!hasValue(aboutUsData)) {
+  if (!hasValue(data)) {
     return null;
   }
 
@@ -33,7 +34,7 @@ const AboutUsSection = ({
     mission = {},
     impact = {},
     image = {}
-  } = aboutUsData;
+  } = data;
 
   // Check if there's any content to display
   const hasAnyContent = hasValue(section.title) ||
@@ -49,9 +50,16 @@ const AboutUsSection = ({
     return null;
   }
 
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=About+Us';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
-      id='about-us'
+      id={sectionId}
       className={`flex flex-col lg:flex-row justify-between items-stretch ${bgColor} gap-8 lg:gap-15 ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       {/* Left Section - Text Content */}
@@ -76,17 +84,13 @@ const AboutUsSection = ({
 
             {/* About Button */}
             {hasValue(section.button?.text) && (
-              <button
-                onClick={() => {
-                  if (section.button?.link) {
-                    window.location.href = section.button.link;
-                  }
-                }}
+              <Link
+                to={section.button?.link || '#'}
                 className='bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-4 py-3 sm:px-5 sm:py-3.5 lg:p-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300'
               >
                 <span>{section.button.text}</span>
                 <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-              </button>
+              </Link>
             )}
           </div>
         )}
@@ -171,15 +175,13 @@ const AboutUsSection = ({
       </div>
 
       {/* Right Section - Image */}
-      {hasValue(image.src) && (
-        <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
-          <img
-            src={image.src}
-            alt={image.alt || "About us image"}
-            className={`${image.className || ''} w-full h-auto lg:h-full object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
-          />
-        </div>
-      )}
+      <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
+        <img
+          src={getImageUrl(image.src)}
+          alt={image.alt || "About us image"}
+          className={`${image.className || ''} w-full h-auto lg:h-full object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
+        />
+      </div>
     </section>
   );
 };

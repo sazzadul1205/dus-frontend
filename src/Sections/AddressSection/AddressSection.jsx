@@ -1,11 +1,12 @@
-// js/Sections/AddressSection/AddressSection.jsx
+// dus-frontend/src/Sections/AddressSection/AddressSection.jsx
 
-"use client";
+// React
+import { useState } from "react";
 
-import React, { useState } from "react";
+// Icons
 import { FaArrowRight } from "react-icons/fa6";
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -52,19 +53,28 @@ const BuildingIcon = ({ className = "", ...props }) => (
 );
 
 const AddressSection = ({
-  officesLocation,
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-10 sm:py-14 lg:py-37.5',
   paddingX = 'px-4 sm:px-6 lg:px-50',
   sectionClassName = '',
   sectionId = 'address-section',
 }) => {
+  const offices = data?.offices || [];
+  const [activeOffice, setActiveOffice] = useState(offices[0] || null);
+
   // Early return if no data
-  if (!hasValue(officesLocation) || officesLocation.length === 0) {
+  if (!hasValue(offices) || offices.length === 0) {
     return null;
   }
 
-  const [activeOffice, setActiveOffice] = useState(officesLocation[0]);
+  // Get map URL with fallback
+  const getMapUrl = (mapUrl) => {
+    if (!mapUrl) {
+      return 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d29224.519937285!2d90.3563309!3d23.7509443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b2b3b4b4b5%3A0x6b6b6b6b6b6b6b6b!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1234567890';
+    }
+    return mapUrl;
+  };
 
   return (
     <section
@@ -74,16 +84,16 @@ const AddressSection = ({
       {/* Tabs */}
       <div className="max-w-200 mx-auto rounded-[18px] bg-white p-4">
         <div className="flex flex-wrap justify-between gap-3">
-          {officesLocation.map((office) => (
+          {offices.map((office) => (
             <button
               key={office.id}
               onClick={() => setActiveOffice(office)}
-              className={`flex items-center justify-center gap-2 sm:gap-3 rounded-2xl px-4 sm:px-5 py-3 sm:py-5 text-[16px] sm:text-[18px] md:text-[24px] font-semibold transition-all shrink-0 cursor-pointer ${activeOffice.id === office.id
-                  ? 'bg-[#FAFAFA] text-[#1396E8]'
-                  : 'bg-white text-[#111827] hover:bg-gray-50'
+              className={`flex items-center justify-center gap-2 sm:gap-3 rounded-2xl px-4 sm:px-5 py-3 sm:py-5 text-[16px] sm:text-[18px] md:text-[24px] font-semibold transition-all shrink-0 cursor-pointer ${activeOffice?.id === office.id
+                ? 'bg-[#FAFAFA] text-[#1396E8]'
+                : 'bg-white text-[#111827] hover:bg-gray-50'
                 }`}
             >
-              <OfficeStar active={activeOffice.id === office.id} />
+              <OfficeStar active={activeOffice?.id === office.id} />
               <span>{office.label}</span>
             </button>
           ))}
@@ -93,19 +103,17 @@ const AddressSection = ({
       {/* Dynamic Map */}
       <div className="relative pt-12">
         <div className="w-full max-w-380 mx-auto rounded-2xl overflow-hidden shadow-lg">
-          {hasValue(activeOffice.mapUrl) && (
-            <iframe
-              src={activeOffice.mapUrl}
-              className="w-full h-100 md:h-228.75 border-0"
-              loading="lazy"
-              allowFullScreen
-              title={`${activeOffice.label} Location Map`}
-            />
-          )}
+          <iframe
+            src={getMapUrl(activeOffice?.mapUrl)}
+            className="w-full h-100 md:h-228.75 border-0"
+            loading="lazy"
+            allowFullScreen
+            title={`${activeOffice?.label || 'Location'} Map`}
+          />
         </div>
 
         {/* Dynamic Address Card */}
-        {hasValue(activeOffice.address) && (
+        {hasValue(activeOffice?.address) && (
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 w-[90%] md:w-192.5 z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 bg-white py-6 px-7 rounded-2xl shadow-xl">
               <div className='bg-[#F4F8FF] rounded-full p-3.5 shrink-0'>

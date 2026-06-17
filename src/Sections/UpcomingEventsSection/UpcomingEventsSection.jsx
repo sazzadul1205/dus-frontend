@@ -1,10 +1,10 @@
-// js/Sections/UpcomingEventsSection/UpcomingEventsSection.jsx
+// dus-frontend/src/Sections/UpcomingEventsSection/UpcomingEventsSection.jsx
 
 // React
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Arrow Icon
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
 // Icons
 import { CiLocationOn } from "react-icons/ci";
@@ -19,17 +19,18 @@ const hasValue = (value) => {
 };
 
 const UpcomingEventsSection = ({
-  eventsData,
+  data,
   bgColor = 'bg-[#FFFFFF]',
   paddingY = 'py-12 sm:py-16 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'upcoming-events',
 }) => {
   // Early return if no data
-  if (!hasValue(eventsData)) return null;
+  if (!hasValue(data)) return null;
 
   // Safe destructuring with defaults
-  const { section = {}, image = {}, events = [] } = eventsData;
+  const { section = {}, image = {}, events = [] } = data;
 
   // Check if there's any content to display
   const hasTitle = hasValue(section.title);
@@ -42,9 +43,16 @@ const UpcomingEventsSection = ({
 
   if (!hasAnyContent) return null;
 
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/600x400/009BE2/FFFFFF?text=Upcoming+Events';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
-      id='upcoming-events'
+      id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       <div className='flex flex-col lg:flex-row justify-between gap-8 lg:gap-25'>
@@ -70,24 +78,20 @@ const UpcomingEventsSection = ({
 
               {/* Button */}
               {hasButton && (
-                <button
-                  onClick={() => {
-                    if (section.button?.link) {
-                      window.location.href = section.button.link;
-                    }
-                  }}
+                <Link
+                  to={section.button?.link || '#'}
                   className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-4 lg:py-5 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-2 sm:gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap mt-5 sm:mt-6 lg:mt-7.5"
                 >
                   {section.button.text}
                   <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-                </button>
+                </Link>
               )}
             </div>
 
             {/* Image */}
             {hasImage && (
               <img
-                src={image.src}
+                src={getImageUrl(image.src)}
                 alt={image.alt || "Upcoming events"}
                 className={`${image.className || ''} mt-8 sm:mt-10 lg:mt-15 rounded-2xl w-full h-auto lg:h-139.25 object-cover`}
               />
@@ -167,18 +171,14 @@ const UpcomingEventsSection = ({
                   )}
 
                   {/* View Event Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (event.link) {
-                        window.location.href = event.link;
-                      }
-                    }}
+                  <Link
+                    to={event.link || '#'}
                     className="bricolage-grotesque text-[#009BE2] font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-2 sm:gap-3 group/btn hover:text-[#009BE2]/70 transition-all duration-300 whitespace-nowrap"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     View Event
                     <ArrowIcon className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all duration-300" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}

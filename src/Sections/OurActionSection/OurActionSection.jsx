@@ -1,7 +1,4 @@
-// js/Sections/OurActionSection/OurActionSection.jsx
-
-// React
-import React from 'react';
+// dus-frontend/src/Sections/OurActionSection/OurActionSection.jsx
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -12,25 +9,33 @@ const hasValue = (value) => {
 };
 
 const OurActionSection = ({
-  actionData,
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-10 sm:py-15 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  sectionId = 'our-action',
 }) => {
   // Early return if no data
-  if (!hasValue(actionData)) return null;
+  if (!hasValue(data)) return null;
 
-  const { section = {}, actions = [] } = actionData;
+  const { section = {}, actions = [] } = data;
 
   // Early return if no content
   if (!hasValue(section.title) && !hasValue(section.description) && !hasValue(actions)) {
     return null;
   }
 
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Action';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
   return (
     <section
-      id='our-action'
+      id={sectionId}
       className={`mx-auto ${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       {/* Section Header */}
@@ -59,7 +64,7 @@ const OurActionSection = ({
             >
               {action.icon && (
                 <img
-                  src={action.icon}
+                  src={getImageUrl(action.icon)}
                   alt={action.alt || action.title || "Action icon"}
                   className='w-8 h-8 sm:w-10 sm:h-10 lg:w-12.5 lg:h-12.5 group-hover:scale-110 transition-transform duration-300 mb-3 sm:mb-4 lg:mb-5'
                 />

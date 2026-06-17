@@ -1,11 +1,10 @@
-// js/Sections/FollowUSSection/FollowUSSection.jsx
+// dus-frontend/src/Sections/FollowUSSection/FollowUSSection.jsx
 
-// React
-import React from 'react';
-import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
+// Icons
 import { FaXTwitter } from 'react-icons/fa6';
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -24,26 +23,56 @@ const iconMapping = {
   x: FaXTwitter,
 };
 
+// Get icon URL with fallback for custom icons
+const getIconUrl = (iconPath) => {
+  if (!iconPath) return null;
+  if (iconPath.startsWith('http')) return iconPath;
+  return iconPath;
+};
+
 const FollowUSSection = ({
-  socialItems = [],
-  title = "Follow Us",
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-10 sm:py-14 lg:py-37.5',
   paddingX = 'px-4 sm:px-6 lg:px-8 xl:px-50',
   sectionClassName = '',
   sectionId = 'follow-us',
 }) => {
+  // Safe destructuring with defaults
+  const {
+    socialItems = [],
+    title = "Follow Us",
+  } = data || {};
+
   // Early return if no data
   if (!hasValue(socialItems) || socialItems.length === 0) {
     return null;
   }
 
-  // Render function to get icon component
-  const renderIcon = (iconName) => {
-    const IconComponent = iconMapping[iconName?.toLowerCase()];
+  // Render function to get icon component or fallback image
+  const renderIcon = (item) => {
+    // If custom icon URL is provided, use it
+    if (hasValue(item.iconUrl)) {
+      return (
+        <img
+          src={getIconUrl(item.iconUrl)}
+          alt={item.label || 'Social icon'}
+          className="w-16 h-16 object-contain"
+        />
+      );
+    }
+
+    // Otherwise use icon mapping
+    const IconComponent = iconMapping[item.icon?.toLowerCase()];
     if (!IconComponent) {
-      console.warn(`Icon "${iconName}" not found in mapping`);
-      return null;
+      // Fallback to placeholder if icon not found
+      return (
+        <img
+          src={`https://placehold.co/66x66/1D2566/FFFFFF?text=${item.label?.charAt(0) || 'S'}`}
+          alt={item.label || 'Social icon'}
+          className="w-16 h-16 object-contain"
+        />
+      );
     }
     return <IconComponent className="text-[66px]" />;
   };
@@ -69,9 +98,9 @@ const FollowUSSection = ({
               rel={item.url?.startsWith('http') ? 'noopener noreferrer' : ''}
               aria-label={item.label}
               className={`flex items-center justify-center py-12 sm:py-16 lg:py-22.5 px-4 sm:px-6 lg:px-30 text-[#1D2566] transition-all duration-300 hover:bg-[#F7F8FC] hover:scale-105 ${index !== socialItems.length - 1 &&
-                  (index % 2 === 0 || (index % 2 === 1 && index < socialItems.length - 1))
-                  ? 'border-r border-[#EFEFEF]'
-                  : ''
+                (index % 2 === 0 || (index % 2 === 1 && index < socialItems.length - 1))
+                ? 'border-r border-[#EFEFEF]'
+                : ''
                 } ${index < socialItems.length - 2 && index % 2 === 0
                   ? 'border-b border-[#EFEFEF] md:border-b-0'
                   : index < socialItems.length - 1 && index % 2 === 1 && socialItems.length > 2
@@ -82,7 +111,7 @@ const FollowUSSection = ({
                   : ''
                 }`}
             >
-              {renderIcon(item.icon)}
+              {renderIcon(item)}
             </a>
           ))}
         </div>

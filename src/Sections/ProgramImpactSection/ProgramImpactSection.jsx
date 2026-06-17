@@ -1,9 +1,10 @@
-// js/Sections/ProgramImpactSection/ProgramImpactSection.jsx
+// dus-frontend/src/Sections/ProgramImpactSection/ProgramImpactSection.jsx
 
 // React
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -13,7 +14,7 @@ const hasValue = (value) => {
 };
 
 const ProgramImpactSection = ({
-  impactData,
+  data,
   bgColor = 'bg-white',
   paddingY = 'py-12 sm:py-16 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-75',
@@ -22,21 +23,35 @@ const ProgramImpactSection = ({
 }) => {
   const [index, setIndex] = useState(0);
 
-  // Early return if no data (SAME pattern)
-  if (!hasValue(impactData)) return null;
+  // Early return if no data
+  if (!hasValue(data)) return null;
 
-  // Safe destructuring with defaults (SAME pattern)
-  const { section = {}, sdgImages = [] } = impactData;
+  // Safe destructuring with defaults
+  const { section = {}, sdgImages = [] } = data;
   const images = section?.mainImage?.images || [];
 
   const hasImages = hasValue(images);
   const hasTitle = hasValue(section.title);
   const hasSdgImages = hasValue(sdgImages);
 
-  // Early return if no content (SAME pattern)
+  // Early return if no content
   if (!hasImages && !hasTitle && !hasSdgImages) return null;
 
   const goToSlide = (i) => setIndex(i);
+
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/1200x600/009BE2/FFFFFF?text=Impact+Image';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
+
+  // Get SDG image URL with fallback
+  const getSdgImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/150x150/009BE2/FFFFFF?text=SDG';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
 
   return (
     <section
@@ -50,7 +65,7 @@ const ProgramImpactSection = ({
             <div className="relative overflow-hidden rounded-xl sm:rounded-2xl group">
               {hasValue(images[index]) && (
                 <img
-                  src={images[index]}
+                  src={getImageUrl(images[index])}
                   alt={`Impact slide ${index + 1}`}
                   className="w-full h-48 sm:h-64 md:h-96 lg:h-186.25 object-cover transition-all duration-500 group-hover:scale-105"
                 />
@@ -64,8 +79,8 @@ const ProgramImpactSection = ({
                       key={i}
                       onClick={() => goToSlide(i)}
                       className={`transition-all duration-300 rounded-full cursor-pointer ${i === index
-                          ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
-                          : "w-2 sm:w-2.5 h-1.5 sm:h-2 bg-white/50 hover:bg-white/70"
+                        ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-white"
+                        : "w-2 sm:w-2.5 h-1.5 sm:h-2 bg-white/50 hover:bg-white/70"
                         }`}
                       aria-label={`Go to slide ${i + 1}`}
                     />
@@ -88,13 +103,23 @@ const ProgramImpactSection = ({
       {hasSdgImages && (
         <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5'>
           {sdgImages.map((image) => (
-            <img
-              key={image.id}
-              src={image.src}
-              alt={image.alt || "SDG"}
-              className='w-full h-auto object-cover rounded-lg hover:scale-105 hover:shadow-lg transition-all duration-300 cursor-pointer'
-              onClick={() => image.link && (window.location.href = image.link)}
-            />
+            <div key={image.id} className="cursor-pointer">
+              {image.link ? (
+                <Link to={image.link}>
+                  <img
+                    src={getSdgImageUrl(image.src)}
+                    alt={image.alt || "SDG"}
+                    className='w-full h-auto object-cover rounded-lg hover:scale-105 hover:shadow-lg transition-all duration-300'
+                  />
+                </Link>
+              ) : (
+                <img
+                  src={getSdgImageUrl(image.src)}
+                  alt={image.alt || "SDG"}
+                  className='w-full h-auto object-cover rounded-lg hover:scale-105 hover:shadow-lg transition-all duration-300'
+                />
+              )}
+            </div>
           ))}
         </div>
       )}

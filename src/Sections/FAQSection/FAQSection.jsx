@@ -1,9 +1,9 @@
-// js/Sections/FAQSection/FAQSection.jsx
+// dus-frontend/src/Sections/FAQSection/FAQSection.jsx
 
 // React
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -13,7 +13,7 @@ const hasValue = (value) => {
 };
 
 const FAQSection = ({
-  faqData,
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-10 sm:py-15 md:py-20 lg:py-37.5',
   paddingX = 'px-4 sm:px-6 md:px-10 lg:px-20 xl:px-50',
@@ -24,12 +24,12 @@ const FAQSection = ({
   const [openId, setOpenId] = useState(defaultOpenId);
 
   // Early return if no data
-  if (!hasValue(faqData)) {
+  if (!hasValue(data)) {
     return null;
   }
 
   // Safe destructuring with defaults
-  const { section = {}, faqs = [] } = faqData;
+  const { section = {}, faqs = [] } = data;
 
   // Check if there's any content to display
   const hasTitle = hasValue(section?.title);
@@ -58,7 +58,7 @@ const FAQSection = ({
             {section.title}
           </h1>
         )}
-        
+
         {/* Section Subtitle */}
         {hasSubtitle && (
           <p className='text-[#333333] text-[14px] sm:text-[16px] md:text-[18px] lg:text-[20px] leading-relaxed bricolage-grotesque px-2 sm:px-4'>
@@ -87,14 +87,12 @@ const FAQSection = ({
                     onClick={() => toggleFAQ(faq.id)}
                   >
                     <div className='flex items-start sm:items-center justify-between gap-3 sm:gap-4'>
-                      <h3 className={`font-600 text-[16px] sm:text-[18px] md:text-[20px] lg:text-[20px] leading-tight flex-1 transition-colors duration-300 ${
-                        isOpen ? 'text-[#009BE2]' : 'text-[#080C14]'
-                      }`}>
+                      <h3 className={`font-600 text-[16px] sm:text-[18px] md:text-[20px] lg:text-[20px] leading-tight flex-1 transition-colors duration-300 ${isOpen ? 'text-[#009BE2]' : 'text-[#080C14]'
+                        }`}>
                         {faq.question}
                       </h3>
-                      <span className={`font-600 text-[20px] sm:text-[22px] md:text-[24px] lg:text-[24px] leading-tight shrink-0 transition-all duration-300 ease-in-out ${
-                        isOpen ? 'rotate-0 text-[#009BE2]' : 'rotate-0 text-[#080C14]'
-                      }`}>
+                      <span className={`font-600 text-[20px] sm:text-[22px] md:text-[24px] lg:text-[24px] leading-tight shrink-0 transition-all duration-300 ease-in-out ${isOpen ? 'rotate-0 text-[#009BE2]' : 'rotate-0 text-[#080C14]'
+                        }`}>
                         {isOpen ? '−' : '+'}
                       </span>
                     </div>
@@ -104,9 +102,8 @@ const FAQSection = ({
                 {/* FAQ Answer - Smooth animation */}
                 {hasAnswer && (
                   <div
-                    className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                    }`}
+                    className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                      }`}
                   >
                     <div className='px-4 sm:px-5 md:px-6 lg:px-7.5 pb-4 sm:pb-5 md:pb-6 lg:pb-7.5'>
                       <p className='text-[#333333] text-[14px] sm:text-[15px] md:text-[16px] lg:text-[18px] leading-relaxed bricolage-grotesque'>

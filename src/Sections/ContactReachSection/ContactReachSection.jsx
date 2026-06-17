@@ -1,12 +1,9 @@
-// js/Sections/ContactReachSection/ContactReachSection.jsx
-
-// React
-import React from 'react';
+// dus-frontend/src/Sections/ContactReachSection/ContactReachSection.jsx
 
 // Components
-import ArrowIcon from '../../components/Shared/ArrowIcon';
+import ArrowIcon from '../../Shared/ArrowIcon';
 
-// Utility function to check if value exists (SAME as other sections)
+// Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -16,17 +13,29 @@ const hasValue = (value) => {
 };
 
 const ContactReachSection = ({
-  image,
-  title = "Reach out to us today!",
-  buttonText = "Submit Message",
+  data,
   bgColor = 'bg-[#F5F5F5]',
   paddingY = 'py-10 sm:py-20 lg:py-37.5',
   paddingX = 'px-6 sm:px-10 md:px-16 lg:px-20 xl:px-50',
   sectionClassName = '',
   sectionId = 'contact-reach',
 }) => {
+  // Safe destructuring with defaults
+  const {
+    image,
+    title = "Reach out to us today!",
+    buttonText = "Submit Message",
+  } = data || {};
+
   const inputClassName =
     'mt-2 w-full rounded-xl border border-[#D6DCEF] bg-white px-5 py-4 text-[16px] text-[#080C14] outline-none transition-colors placeholder:text-[#A6B0D1] focus:border-[#009BE2]';
+
+  // Get image URL with fallback
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/800x800/1500FF/FFFFFF?text=Contact+Us';
+    if (imagePath.startsWith('http')) return imagePath;
+    return imagePath;
+  };
 
   // Early return if no image (optional - you might want to render form even without image)
   if (!hasValue(image)) {
@@ -44,7 +53,7 @@ const ContactReachSection = ({
         {hasValue(image) && (
           <>
             <img
-              src={image}
+              src={getImageUrl(image)}
               alt='Contact Reach'
               className='w-full h-full object-cover lg:max-h-none max-h-100'
             />

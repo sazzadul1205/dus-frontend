@@ -19,8 +19,8 @@ const PublicLayout = ({ children, topBarData, navbarData, footerData, storageUrl
         {children}
       </main>
 
-      {/* Footer */}
-      <Footer footerData={footerData} storageUrl={storageUrl} />
+      {/* Footer - storageUrl not needed by Footer, remove it */}
+      <Footer footerData={footerData} />
     </div>
   );
 };
