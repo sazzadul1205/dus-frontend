@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
 // Layout
-import PublicLayout from '../../../layouts/PublicLayout';
+import PublicLayout from '../../Layout/PublicLayout';
 
 // Dynamic Section Renderer
 import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
