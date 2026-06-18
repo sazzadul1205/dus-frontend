@@ -1,54 +1,191 @@
 // dus-frontend/src/pages/DynamicPage.jsx
 
-// React
 import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
-
-// layout
+import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
+import useAxiosPublic from '../hooks/useAxiosPublic';
 import PublicLayout from "../Layout/PublicLayout";
-
-// Components
 import DynamicSectionRenderer from '../Shared/DynamicSectionRenderer';
 
-const DynamicPage = ({
-  topbarData,
-  navbarData,
-  footerData,
-  storageUrl,
-  sectionConfig,
-  pageTitle,
-  ...pageData
-}) => {
-  // Get enabled sections sorted by order
-  const sectionsToRender = useMemo(() =>
-    (sectionConfig?.sections || [])
-      .filter(section => section.enabled === true)
-      .sort((a, b) => a.order - b.order),
-    [sectionConfig]
-  );
+export default function DynamicPage({
+  pageInfo,
+  children,
+  customTitle,
+  ...props
+}) {
+  const location = useLocation();
+  const axiosPublic = useAxiosPublic();
 
+  // Auto-detect page slug
+  const getPageSlug = () => {
+    const path = location.pathname;
+    const cleanPath = path.replace(/^\/+/, '').replace(/\/+$/, '');
+    if (!cleanPath) return 'home';
+    return cleanPath.split('/')[0] || 'home';
+  };
+
+  const pageSlug = getPageSlug();
+
+  // Fetch shared data
+  const {
+    data: sharedData,
+    isLoading: sharedLoading,
+    error: sharedError
+  } = useQuery({
+    queryKey: ['sharedData'],
+    queryFn: async () => {
+      const response = await axiosPublic.get('/public/data/shared_data.json');
+      return response.data;
+    },
+  });
+
+  // Fetch section configs
+  const {
+    data: sectionConfigsData,
+    isLoading: configsLoading,
+    error: configsError
+  } = useQuery({
+    queryKey: ['sectionConfigs', pageSlug],
+    queryFn: async () => {
+      const response = await axiosPublic.get(`/public/data/section_configs.json?page_slug=${pageSlug}`);
+      return response.data;
+    },
+    enabled: !!pageSlug
+  });
+
+  // Process shared data
+  const parsedSharedData = useMemo(() => {
+    if (!sharedData?.data) return {};
+
+    const result = {};
+    sharedData.data.forEach(item => {
+      if (item.data) {
+        try {
+          result[item.type] = JSON.parse(item.data);
+        } catch (e) {
+          console.error(`Failed to parse ${item.type} data:`, e);
+        }
+      }
+    });
+    return result;
+  }, [sharedData]);
+
+  // Filter section configs
+  const pageConfigs = useMemo(() => {
+    return (sectionConfigsData?.data || [])
+      .filter(config => config.page_slug === pageSlug)
+      .sort((a, b) => a.display_order - b.display_order);
+  }, [sectionConfigsData, pageSlug]);
+
+  // Loading state
+  if (sharedLoading || configsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#009BE2] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-[#515151]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (sharedError || configsError) {
+    console.error('Data Error:', sharedError || configsError);
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">
+            We couldn't load the page data. Please try again later.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#009BE2] text-white px-6 py-2 rounded-lg hover:bg-[#009BE2]/80 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Get page title
+  const getPageTitle = () => {
+    if (customTitle) return customTitle;
+    if (pageInfo?.title) return `${pageInfo.title} | DUS - Dwip Unnayan Society`;
+
+    const titles = {
+      'home': 'Home | DUS - Dwip Unnayan Society | Empowering Communities',
+      'about': 'About Us | DUS - Dwip Unnayan Society | Empowering Communities',
+      'about-details': 'About | DUS - Dwip Unnayan Society | Empowering Communities',
+      'blogs': 'Blogs | DUS - Dwip Unnayan Society | Empowering Communities',
+      'blog-details': 'Blog | DUS - Dwip Unnayan Society | Empowering Communities',
+      'contact': 'Contact Us | DUS - Dwip Unnayan Society | Empowering Communities',
+      'projects-programs': 'Projects & Programs | DUS - Dwip Unnayan Society | Empowering Communities',
+      'projects-programs-details': 'Program | DUS - Dwip Unnayan Society | Empowering Communities',
+    };
+    return titles[pageSlug] || 'DUS - Dwip Unnayan Society | Empowering Communities';
+  };
+
+  // Get meta description
+  const getMetaDescription = () => {
+    if (pageInfo?.description) return pageInfo.description;
+    return 'Dwip Unnayan Society (DUS) is a community-based philanthropic organization dedicated to sustainable poverty reduction and community development.';
+  };
+
+  const storageUrl = import.meta.env.VITE_STORAGE_URL || '';
+
+  // If children are provided (custom page)
+  if (children) {
+    return (
+      <PublicLayout
+        topBarData={parsedSharedData.topbar || null}
+        navbarData={parsedSharedData.navbar || null}
+        footerData={parsedSharedData.footer || null}
+        storageUrl={storageUrl}
+      >
+        <Helmet>
+          <title>{getPageTitle()}</title>
+          <meta name="description" content={getMetaDescription()} />
+          <meta property="og:title" content={getPageTitle()} />
+          <meta property="og:description" content={getMetaDescription()} />
+        </Helmet>
+        {children}
+      </PublicLayout>
+    );
+  }
+
+  // Standard dynamic page
   return (
     <PublicLayout
-      topBarData={topbarData}
-      navbarData={navbarData}
-      footerData={footerData}
+      topBarData={parsedSharedData.topbar || null}
+      navbarData={parsedSharedData.navbar || null}
+      footerData={parsedSharedData.footer || null}
       storageUrl={storageUrl}
     >
       <Helmet>
-        <title>{pageTitle || "DUS - Dwip Unnayan Society | Empowering Communities"}</title>
+        <title>{getPageTitle()}</title>
+        <meta name="description" content={getMetaDescription()} />
+        <meta property="og:title" content={getPageTitle()} />
+        <meta property="og:description" content={getMetaDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+        <link rel="canonical" href={window.location.href} />
       </Helmet>
 
-      {sectionsToRender.length === 0 && (
+      {/* Empty state */}
+      {pageConfigs.length === 0 && (
         <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
           <div className="max-w-2xl mx-auto text-center">
-            {/* Empty state illustration */}
             <div className="mb-8">
               <svg
                 className="mx-auto h-32 w-32 text-gray-300"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
-                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -58,97 +195,36 @@ const DynamicPage = ({
                 />
               </svg>
             </div>
-
-            {/* Title */}
             <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
               No Content Available
             </h2>
-
-            {/* Description */}
             <p className="mt-3 text-base text-gray-500">
-              This page is currently being built. Please check back later for updates.
+              This page is currently being built. Please check back later.
             </p>
-
-            {/* Optional: Show page name for debugging */}
-            {import.meta.env.DEV && pageTitle && (
+            {import.meta.env.DEV && (
               <p className="mt-2 text-sm text-gray-400">
-                Page: <span className="font-mono">{pageTitle}</span>
+                Page Slug: <span className="font-mono">{pageSlug}</span>
+                <br />
+                Sections: {pageConfigs.length}
               </p>
-            )}
-
-            {/* Action buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Refresh Page
-              </button>
-
-              <a
-                href="/"
-                className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-4 focus:ring-gray-300 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-                Go to Homepage
-              </a>
-            </div>
-
-            {/* Show section config for debugging in dev */}
-            {import.meta.env.DEV && sectionConfig && (
-              <div className="mt-8 p-4 bg-gray-50 rounded-lg text-left">
-                <p className="text-xs font-mono text-gray-500">
-                  <span className="font-semibold text-gray-700">Debug Info:</span>
-                  <br />
-                  Sections: {sectionConfig?.sections?.length || 0}
-                  {sectionConfig?.sections?.length > 0 && (
-                    <span className="text-yellow-600">
-                      {' '}
-                      ({sectionConfig.sections.filter(s => s.enabled).length} enabled)
-                    </span>
-                  )}
-                </p>
-              </div>
             )}
           </div>
         </div>
       )}
 
-      {sectionsToRender.map((section) => (
+      {/* Render all sections */}
+      {pageConfigs.map((section) => (
         <DynamicSectionRenderer
           key={section.id}
           section={section}
-          pageData={pageData}
-          globalProps={{ storageUrl }}
+          pageData={props}
+          globalProps={{
+            storageUrl,
+            sharedData: parsedSharedData,
+            pageSlug
+          }}
         />
       ))}
     </PublicLayout>
   );
-};
-
-export default DynamicPage;
+}

@@ -3,5 +3,5 @@
 import DynamicPage from '../DynamicPage';
 
 export default function Home(props) {
-  return <DynamicPage {...props} pageTitle="Home | DUS - Dwip Unnayan Society | Empowering Communities" />;
+  return <DynamicPage {...props} />;
 }
