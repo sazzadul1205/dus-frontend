@@ -11,9 +11,22 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
   const renderHTML = (htmlString) => ({ __html: htmlString });
 
   const data = subPageData || {};
-  const { title, content, image, btn } = data;
+  const {
+    title,
+    content,
+    full_content: fullContent,
+    image,
+    btn_text: btnText,
+    btn_link: btnLink
+  } = data;
 
-  if (!title && !content) return null;
+  // Use full_content first, fallback to content
+  const bodyContent = fullContent || content || '';
+
+  if (!title && !bodyContent) return null;
+
+  // Build btn object if btn_text and btn_link exist
+  const btn = (btnText && btnLink) ? { text: btnText, link: btnLink } : null;
 
   return (
     <section id={sectionId} className={`${bgColor || ''} ${paddingY || ''} ${paddingX || ''} ${sectionClassName || ''}`}>
@@ -31,7 +44,7 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
           />
         </div>
       )}
-      {content && (
+      {bodyContent && (
         <div
           className="bricolage-grotesque prose prose-lg max-w-none
             prose-headings:font-700 prose-headings:text-[#080C14] 
@@ -41,10 +54,10 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
             prose-strong:text-[#009BE2]
             prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
             prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
-          dangerouslySetInnerHTML={renderHTML(content)}
+          dangerouslySetInnerHTML={renderHTML(bodyContent)}
         />
       )}
-      {btn && btn.text && btn.link && (
+      {btn && (
         <div className="mt-8">
           <Link to={btn.link} className="inline-block bg-[#009BE2] text-white font-600 px-8 py-4 rounded-lg hover:bg-[#007BB5] transition-colors">
             {btn.text}
@@ -58,10 +71,15 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
 export default function AboutDetailsContent({
   sectionConfigs,
   storageUrl,
-  // eslint-disable-next-line no-unused-vars
   slug,
   ...pageData
 }) {
+  const inheritedPageData = pageData.pageData || {};
+  const aboutContentList = pageData.contentSectionData || inheritedPageData.contentSectionData || pageData.aboutContentData || inheritedPageData.aboutContentData || [];
+  const contentData = Array.isArray(aboutContentList)
+    ? aboutContentList.find(item => item.slug === slug) || aboutContentList[0] || null
+    : aboutContentList;
+
   const allSections = (sectionConfigs || [])
     .filter(section => section.is_enabled === 1);
 
@@ -72,6 +90,26 @@ export default function AboutDetailsContent({
   const bannerSection = dynamicSections.find(s => s.component === 'PageBannerSection');
   const otherDynamicSections = dynamicSections.filter(s => s.component !== 'PageBannerSection');
 
+  let mergedPageData = {
+    ...inheritedPageData,
+    ...pageData,
+    contentSectionData: contentData,
+    aboutContentData: contentData,
+  };
+
+  if (mergedPageData.bannerData && contentData) {
+    mergedPageData.bannerData = {
+      ...mergedPageData.bannerData,
+      content: {
+        ...mergedPageData.bannerData.content,
+        title: {
+          ...mergedPageData.bannerData.content?.title,
+          text: contentData.title || mergedPageData.bannerData.content?.title?.text || 'About'
+        }
+      }
+    };
+  }
+
   return (
     <>
       {/* Banner */}
@@ -79,7 +117,7 @@ export default function AboutDetailsContent({
         <DynamicSectionRenderer
           key={bannerSection.id}
           section={bannerSection}
-          pageData={pageData}
+          pageData={mergedPageData}
           globalProps={{ storageUrl }}
         />
       )}
@@ -87,11 +125,22 @@ export default function AboutDetailsContent({
       {/* Fixed Sections */}
       {fixedSections.map((section) => {
         if (section.component === 'ContentSection') {
+          let customProps = {};
+          if (section.custom_props) {
+            try {
+              customProps = typeof section.custom_props === 'string'
+                ? JSON.parse(section.custom_props)
+                : section.custom_props;
+            } catch (e) {
+              console.error('Failed to parse custom_props:', e);
+            }
+          }
+
           return (
             <ContentSection
               key={section.id}
-              subPageData={pageData.contentSectionData}
-              {...section.custom_props}
+              subPageData={contentData}
+              {...customProps}
             />
           );
         }
@@ -103,7 +152,7 @@ export default function AboutDetailsContent({
         <DynamicSectionRenderer
           key={section.id}
           section={section}
-          pageData={pageData}
+          pageData={mergedPageData}
           globalProps={{ storageUrl }}
         />
       ))}

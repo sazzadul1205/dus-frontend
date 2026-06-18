@@ -140,6 +140,17 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     enabled: !!configsData,
   });
 
+  // Fetch about content data for about-details pages
+  const {
+    data: aboutContentData,
+    error: aboutContentError,
+    isLoading: aboutContentLoading,
+  } = useQuery({
+    queryKey: ['aboutContentData'],
+    queryFn: () => axiosPublic.get('/public/data/about_content.json').then(res => res.data),
+    enabled: !!configsData,
+  });
+
   // Process data
   const parsedShared = useMemo(() => {
     if (!sharedData?.data) return {};
@@ -192,6 +203,10 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         const blogList = blogsData?.data || [];
         data[section.data_key] = blogList;
         data['blogsData'] = blogList;
+      } else if (section.data_table === 'about_content' && section.data_key) {
+        const aboutList = aboutContentData?.data || [];
+        data[section.data_key] = aboutList;
+        data['aboutContentData'] = aboutList;
       } else if (section.data_table && section.data_key) {
         data[section.data_key] = props[section.data_key] || null;
       }
@@ -207,12 +222,18 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
       data.blogsData = blogsData.data;
     }
 
+    if (aboutContentData?.data) {
+      const aboutList = aboutContentData.data;
+      data.aboutContentData = aboutList;
+      data.contentSectionData = aboutList;
+    }
+
     return data;
-  }, [pageConfigs, parsedShared, parsedCustom, props, programsData, blogsData]);
+  }, [pageConfigs, parsedShared, parsedCustom, props, programsData, blogsData, aboutContentData]);
 
   // Loading/Error states
-  const isLoading = configsLoading || sharedLoading || customLoading || programsLoading || blogsLoading;
-  const hasError = configsError || sharedError || customError || programsError || blogsError;
+  const isLoading = configsLoading || sharedLoading || customLoading || programsLoading || blogsLoading || aboutContentLoading;
+  const hasError = configsError || sharedError || customError || programsError || blogsError || aboutContentError;
 
   // Render - Loading
   if (isLoading) {
