@@ -14,6 +14,9 @@ const DynamicSectionRenderer = ({
   pageData,          // All page data (sectionDataMap)
   globalProps = {}   // Global props like storageUrl
 }) => {
+
+  console.log(section);
+
   const {
     id,
     component: componentName,
@@ -45,10 +48,53 @@ const DynamicSectionRenderer = ({
     });
   } else if (propName && dataKey) {
     // Handle standard single prop sections
-    componentProps[propName] = pageData[dataKey];
+    // Try multiple ways to get the data
+    let dataValue = pageData[dataKey];
+
+    // If not found, try with the transformed key (kebab-case)
+    if (dataValue === undefined && dataKey) {
+      // Try to transform the key
+      const kebabKey = dataKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+      dataValue = pageData[kebabKey];
+    }
+
+    // If still not found, try the propName as a key
+    if (dataValue === undefined && propName) {
+      dataValue = pageData[propName];
+      const kebabPropName = propName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+      if (dataValue === undefined) {
+        dataValue = pageData[kebabPropName];
+      }
+    }
+
+    componentProps[propName] = dataValue;
   } else if (propName) {
     // Fallback: use propName as both prop and dataKey
-    componentProps[propName] = pageData[propName];
+    let dataValue = pageData[propName];
+    if (dataValue === undefined) {
+      const kebabPropName = propName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+      dataValue = pageData[kebabPropName];
+    }
+    componentProps[propName] = dataValue;
+  }
+
+  // If component expects 'data' prop, try to find it
+  if (componentProps[propName] === undefined) {
+    // Try to find any data that might match
+    const possibleKeys = [
+      section.data_key,
+      propName,
+      section.data_key?.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+      propName?.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+      componentName.replace('Section', '').replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase(),
+    ];
+
+    for (const key of possibleKeys) {
+      if (key && pageData[key] !== undefined) {
+        componentProps[propName || 'data'] = pageData[key];
+        break;
+      }
+    }
   }
 
   return (

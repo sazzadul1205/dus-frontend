@@ -1,11 +1,18 @@
 // dus-frontend/src/pages/DynamicPage.jsx
 
+// React
 import { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
-import useAxiosPublic from '../hooks/useAxiosPublic';
+import { useQuery } from '@tanstack/react-query';
+
+// Layout
 import PublicLayout from "../Layout/PublicLayout";
+
+// Hooks
+import useAxiosPublic from '../hooks/useAxiosPublic';
+
+// Dynamic Section Renderer
 import DynamicSectionRenderer from '../Shared/DynamicSectionRenderer';
 
 export default function DynamicPage({
@@ -27,19 +34,6 @@ export default function DynamicPage({
 
   const pageSlug = getPageSlug();
 
-  // Fetch shared data
-  const {
-    data: sharedData,
-    isLoading: sharedLoading,
-    error: sharedError
-  } = useQuery({
-    queryKey: ['sharedData'],
-    queryFn: async () => {
-      const response = await axiosPublic.get('/public/data/shared_data.json');
-      return response.data;
-    },
-  });
-
   // Fetch section configs
   const {
     data: sectionConfigsData,
@@ -54,13 +48,61 @@ export default function DynamicPage({
     enabled: !!pageSlug
   });
 
+  console.log("--- Sectiuon Config", sectionConfigsData);
+
+
+  // DYNAMICALLY determine which shared data types are needed
+  const neededSharedDataTypes = useMemo(() => {
+    if (!sectionConfigsData?.data) {
+      return new Set();
+    }
+
+    const types = new Set();
+
+    sectionConfigsData.data.forEach(config => {
+      if (config.data_table === 'shared_data') {
+        let type = config.data_key;
+        if (type && type.endsWith('Data')) {
+          type = type.slice(0, -4);
+        }
+        if (type) {
+          type = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+          types.add(type);
+        }
+      }
+    });
+
+    // Always include layout data
+    types.add('topbar');
+    types.add('navbar');
+    types.add('footer');
+
+    return types;
+  }, [sectionConfigsData]);
+
+  // Fetch ONLY the needed shared data
+  const {
+    data: sharedData,
+    isLoading: sharedLoading,
+    error: sharedError
+  } = useQuery({
+    queryKey: ['sharedData', Array.from(neededSharedDataTypes).sort().join(',')],
+    queryFn: async () => {
+      const response = await axiosPublic.get('/public/data/shared_data.json');
+      return response.data;
+    },
+    enabled: !!sectionConfigsData && neededSharedDataTypes.size > 0,
+  });
+
   // Process shared data
   const parsedSharedData = useMemo(() => {
-    if (!sharedData?.data) return {};
+    if (!sharedData?.data) {
+      return {};
+    }
 
     const result = {};
     sharedData.data.forEach(item => {
-      if (item.data) {
+      if (neededSharedDataTypes.has(item.type) && item.data) {
         try {
           result[item.type] = JSON.parse(item.data);
         } catch (e) {
@@ -68,18 +110,54 @@ export default function DynamicPage({
         }
       }
     });
-    return result;
-  }, [sharedData]);
 
-  // Filter section configs
+    return result;
+  }, [sharedData, neededSharedDataTypes]);
+
+  // Filter section configs for the current page
   const pageConfigs = useMemo(() => {
-    return (sectionConfigsData?.data || [])
+    if (!sectionConfigsData?.data) {
+      return [];
+    }
+
+    return sectionConfigsData.data
       .filter(config => config.page_slug === pageSlug)
       .sort((a, b) => a.display_order - b.display_order);
   }, [sectionConfigsData, pageSlug]);
 
+  // Build pageData for each section - UPDATED to store data under both keys
+  const pageData = useMemo(() => {
+    const data = {};
+
+    pageConfigs.forEach(section => {
+      // If section uses shared_data, get it from parsedSharedData
+      if (section.data_table === 'shared_data') {
+        let type = section.data_key;
+        if (type && type.endsWith('Data')) {
+          type = type.slice(0, -4);
+        }
+        if (type) {
+          type = type.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+          const value = parsedSharedData[type] || null;
+
+          // Store under BOTH keys for maximum compatibility
+          // Original key (e.g., 'upcomingEventsData') - for components that expect this
+          data[section.data_key] = value;
+          // Transformed key (e.g., 'upcoming-events') - for components that use this
+          data[type] = value;
+        }
+      } else if (section.data_table) {
+        // For custom data tables, use props
+        const value = props[section.data_key] || null;
+        data[section.data_key] = value;
+      }
+    });
+
+    return data;
+  }, [pageConfigs, parsedSharedData, props]);
+
   // Loading state
-  if (sharedLoading || configsLoading) {
+  if (configsLoading || sharedLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -91,8 +169,8 @@ export default function DynamicPage({
   }
 
   // Error state
-  if (sharedError || configsError) {
-    console.error('Data Error:', sharedError || configsError);
+  if (configsError || sharedError) {
+    console.error('Data Error:', { configsError, sharedError });
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -114,8 +192,12 @@ export default function DynamicPage({
 
   // Get page title
   const getPageTitle = () => {
-    if (customTitle) return customTitle;
-    if (pageInfo?.title) return `${pageInfo.title} | DUS - Dwip Unnayan Society`;
+    if (customTitle) {
+      return customTitle;
+    }
+    if (pageInfo?.title) {
+      return `${pageInfo.title} | DUS - Dwip Unnayan Society`;
+    }
 
     const titles = {
       'home': 'Home | DUS - Dwip Unnayan Society | Empowering Communities',
@@ -132,7 +214,9 @@ export default function DynamicPage({
 
   // Get meta description
   const getMetaDescription = () => {
-    if (pageInfo?.description) return pageInfo.description;
+    if (pageInfo?.description) {
+      return pageInfo.description;
+    }
     return 'Dwip Unnayan Society (DUS) is a community-based philanthropic organization dedicated to sustainable poverty reduction and community development.';
   };
 
@@ -205,7 +289,7 @@ export default function DynamicPage({
               <p className="mt-2 text-sm text-gray-400">
                 Page Slug: <span className="font-mono">{pageSlug}</span>
                 <br />
-                Sections: {pageConfigs.length}
+                Sections Found: {pageConfigs.length}
               </p>
             )}
           </div>
@@ -217,7 +301,7 @@ export default function DynamicPage({
         <DynamicSectionRenderer
           key={section.id}
           section={section}
-          pageData={props}
+          pageData={pageData}
           globalProps={{
             storageUrl,
             sharedData: parsedSharedData,
