@@ -103,6 +103,17 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     enabled: !!configsData,
   });
 
+  // Fetch blogs data
+  const {
+    data: blogsData,
+    error: blogsError,
+    isLoading: blogsLoading,
+  } = useQuery({
+    queryKey: ['blogsData'],
+    queryFn: () => axiosPublic.get('/public/data/blogs.json').then(res => res.data),
+    enabled: !!configsData,
+  });
+
   // Process data
   const parsedShared = useMemo(() => {
     if (!sharedData?.data) return {};
@@ -152,6 +163,11 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         // Programs data from programs.json
         data[section.data_key] = programsData?.data || [];
         data['programsData'] = programsData?.data || [];
+      } else if (section.data_table === 'blogs' && section.data_key) {
+        // Blogs data from blogs.json
+        const blogList = blogsData?.data || [];
+        data[section.data_key] = blogList;
+        data['blogsData'] = blogList;
       } else if (section.data_table && section.data_key) {
         data[section.data_key] = props[section.data_key] || null;
       }
@@ -162,12 +178,17 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
       data.programsData = programsData.data;
     }
 
+    // Always pass blogsData for details pages
+    if (blogsData?.data) {
+      data.blogsData = blogsData.data;
+    }
+
     return data;
-  }, [pageConfigs, parsedShared, parsedCustom, props, programsData]);
+  }, [pageConfigs, parsedShared, parsedCustom, props, programsData, blogsData]);
 
   // Loading/Error states
-  const isLoading = configsLoading || sharedLoading || customLoading || programsLoading;
-  const hasError = configsError || sharedError || customError || programsError;
+  const isLoading = configsLoading || sharedLoading || customLoading || programsLoading || blogsLoading;
+  const hasError = configsError || sharedError || customError || programsError || blogsError;
 
   // Render - Loading
   if (isLoading) {
@@ -183,7 +204,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
 
   // Render - Error
   if (hasError) {
-    console.error('Data Error:', { configsError, sharedError, customError });
+    console.error('Data Error:', { configsError, sharedError, customError, programsError, blogsError });
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -268,7 +289,13 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
           key={section.id}
           section={section}
           pageData={pageData}
-          globalProps={{ storageUrl: STORAGE_URL, sharedData: parsedShared, pageSlug }}
+          globalProps={{
+            storageUrl: STORAGE_URL,
+            sharedData: parsedShared,
+            pageSlug,
+            programsData: pageData.programsData || [],
+            blogsData: pageData.blogsData || [],
+          }}
         />
       ))}
     </PublicLayout>

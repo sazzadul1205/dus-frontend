@@ -1,7 +1,12 @@
 // dus-frontend/src/pages/ProjectsAndProgramsDetails/ProjectsAndProgramsDetails.jsx
 
+// React
 import { useParams } from 'react-router-dom';
+
+// Dynamic Page 
 import DynamicPage from '../DynamicPage';
+
+// Components
 import ProjectsAndProgramsDetailsContent from './ProjectsAndProgramsDetailsContent';
 
 export default function ProjectsAndProgramsDetails(props) {
