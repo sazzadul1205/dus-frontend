@@ -6,6 +6,9 @@ import { Link } from 'react-router-dom';
 // Dynamic Section Renderer
 import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
+// Utility
+import { createSanitizedHTML } from '../../utils/sanitize';
+
 // Internal components (used as fallback or for special handling)
 const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
   const tagColors = [
@@ -83,8 +86,6 @@ const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName
 };
 
 const BlogContentSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
-  const renderHTML = (htmlString) => ({ __html: htmlString });
-
   if (!blogData) return null;
 
   const content = blogData.full_content || blogData.fullContent || '';
@@ -129,7 +130,7 @@ const BlogContentSection = ({ blogData, bgColor, paddingY, paddingX, sectionClas
                   prose-p:mt-4 prose-p:mb-4
                   prose-h2:mt-8 prose-h2:mb-4
                   prose-h3:mt-6 prose-h3:mb-3"
-                dangerouslySetInnerHTML={renderHTML(content)}
+                dangerouslySetInnerHTML={createSanitizedHTML(content)}
               />
             )}
           </div>
@@ -227,13 +228,13 @@ export default function BlogDetailsContent({
           ? item.tags
           : typeof item.tags === 'string'
             ? (() => {
-                try {
-                  const parsed = JSON.parse(item.tags);
-                  return Array.isArray(parsed) ? parsed : [];
-                } catch {
-                  return [];
-                }
-              })()
+              try {
+                const parsed = JSON.parse(item.tags);
+                return Array.isArray(parsed) ? parsed : [];
+              } catch {
+                return [];
+              }
+            })()
             : [];
 
         return itemTags.some(tag => parsedBlogData.tags.includes(tag));

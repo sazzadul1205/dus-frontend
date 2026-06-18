@@ -3,11 +3,11 @@
 // React
 import { Link } from 'react-router-dom';
 
-// DOM Purify
-import DOMPurify from 'dompurify';
-
 // Components
 import ArrowIcon from '../../Shared/ArrowIcon';
+
+// Utility
+import { createSanitizedHTML } from '../../utils/sanitize';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -16,37 +16,6 @@ const hasValue = (value) => {
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === 'object') return Object.keys(value).length > 0;
   return true;
-};
-
-// Configure DOMPurify for safe HTML rendering
-const purifyConfig = {
-  ALLOWED_TAGS: [
-    'p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike',
-    'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'span', 'div', 'img', 'blockquote', 'code', 'pre',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
-    'hr', 'sub', 'sup', 'small', 'mark', 'del', 'ins'
-  ],
-  ALLOWED_ATTR: [
-    'href', 'target', 'rel', 'alt', 'src', 'class', 'id',
-    'style', 'title', 'width', 'height', 'align', 'valign',
-    'colspan', 'rowspan', 'scope', 'headers', 'cellpadding', 'cellspacing'
-  ],
-  ALLOW_DATA_ATTR: false,
-  ADD_ATTR: ['target'],
-  ADD_TAGS: ['iframe'],
-  ADD_URI_SAFE_ATTR: ['src', 'href'],
-  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
-  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onsubmit'],
-  // eslint-disable-next-line no-useless-escape
-  ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|data|blob):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-  RETURN_DOM: false,
-  RETURN_DOM_FRAGMENT: false,
-  RETURN_DOM_IMPORT: false,
-  SANITIZE_DOM: true,
-  KEEP_CONTENT: true,
-  IN_PLACE: false,
-  USE_PROFILES: { html: true },
 };
 
 const HeroFigureSection = ({
@@ -85,23 +54,6 @@ const HeroFigureSection = ({
   if (!hasAnyContent) {
     return null;
   }
-
-  // Sanitize HTML content with DOMPurify
-  const sanitizeHTML = (htmlString) => {
-    if (!htmlString) return '';
-    try {
-      return DOMPurify.sanitize(htmlString, purifyConfig);
-    } catch (error) {
-      console.error('Error sanitizing HTML content:', error);
-      return htmlString.replace(/[<>]/g, ''); // Fallback: remove < and >
-    }
-  };
-
-  // Function to render HTML content safely
-  const renderHTML = (htmlString) => {
-    const sanitized = sanitizeHTML(htmlString);
-    return { __html: sanitized };
-  };
 
   // Get image URL with fallback
   const getImageUrl = (imagePath) => {
@@ -142,7 +94,7 @@ const HeroFigureSection = ({
               WebkitBoxOrient: 'vertical',
               wordBreak: 'break-word'
             }}
-            dangerouslySetInnerHTML={renderHTML(content.html)}
+            dangerouslySetInnerHTML={createSanitizedHTML(content.html)}
           />
           {/* Ellipsis indicator - Only show if content overflows */}
           <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-white to-transparent pointer-events-none"></div>

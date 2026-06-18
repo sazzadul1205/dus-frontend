@@ -6,10 +6,11 @@ import { Link } from 'react-router-dom';
 // Dynamic Section Renderer
 import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
+// Utility
+import { createSanitizedHTML } from '../../utils/sanitize';
+
 // Special ContentSection component
 const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
-  const renderHTML = (htmlString) => ({ __html: htmlString });
-
   const data = subPageData || {};
   const {
     title,
@@ -54,7 +55,7 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
             prose-strong:text-[#009BE2]
             prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
             prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
-          dangerouslySetInnerHTML={renderHTML(bodyContent)}
+          dangerouslySetInnerHTML={createSanitizedHTML(bodyContent)}
         />
       )}
       {btn && (

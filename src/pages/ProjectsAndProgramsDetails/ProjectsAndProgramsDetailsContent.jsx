@@ -3,10 +3,11 @@
 // Dynamic Section Renderer
 import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
+// Utility
+import { createSanitizedHTML } from '../../utils/sanitize';
+
 // Program Content Section Component
 const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
-  const renderHTML = (htmlString) => ({ __html: htmlString });
-
   // If no programData, return null
   if (!programData) {
     return null;
@@ -65,7 +66,7 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
             prose-strong:text-[#009BE2]
             prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
             prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
-          dangerouslySetInnerHTML={renderHTML(content)}
+          dangerouslySetInnerHTML={createSanitizedHTML(content)}
         />
       )}
     </section>

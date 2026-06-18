@@ -7,6 +7,9 @@ import { useRef, useEffect, useState } from 'react';
 // Arrow Icon
 import ArrowIcon from "../../Shared/ArrowIcon";
 
+// Utility
+import { createSanitizedHTML } from '../../utils/sanitize';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -230,7 +233,7 @@ const OurProgramsSection = ({
                       {truncatedDescription && (
                         <div
                           className="bricolage-grotesque font-400 text-[16px] sm:text-[18px] lg:text-[20px] text-[#524B48] leading-relaxed line-clamp-9"
-                          dangerouslySetInnerHTML={{ __html: truncatedDescription }}
+                          dangerouslySetInnerHTML={createSanitizedHTML(truncatedDescription)}
                         />
                       )}
 
