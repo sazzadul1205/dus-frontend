@@ -7,10 +7,10 @@ import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
   const renderHTML = (htmlString) => ({ __html: htmlString });
 
-  const data = programData || window.programData;
-  if (!data) return null;
+  const data = programData || {};
+  if (!data || !data.title) return null;
 
-  const content = data.fullContentHtml || data.fullContent || data?.content;
+  const content = data.full_content_html || data.full_content || data?.content;
 
   return (
     <section id={sectionId} className={`${bgColor || ''} ${paddingY || ''} ${paddingX || ''} ${sectionClassName || ''}`}>
@@ -28,17 +28,19 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
         </div>
       )}
 
-      <div
-        className="bricolage-grotesque prose prose-lg max-w-none
-          prose-headings:font-700 prose-headings:text-[#080C14] 
-          prose-p:text-[#333333] prose-p:leading-relaxed prose-p:mb-4
-          prose-ul:text-[#333333] prose-ul:leading-relaxed
-          prose-li:text-[#333333] prose-li:leading-relaxed
-          prose-strong:text-[#009BE2]
-          prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
-          prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
-        dangerouslySetInnerHTML={renderHTML(content)}
-      />
+      {content && (
+        <div
+          className="bricolage-grotesque prose prose-lg max-w-none
+            prose-headings:font-700 prose-headings:text-[#080C14] 
+            prose-p:text-[#333333] prose-p:leading-relaxed prose-p:mb-4
+            prose-ul:text-[#333333] prose-ul:leading-relaxed
+            prose-li:text-[#333333] prose-li:leading-relaxed
+            prose-strong:text-[#009BE2]
+            prose-h2:font-700 prose-h2:text-[#080C14] prose-h2:mt-8 prose-h2:mb-4
+            prose-h2:text-2xl sm:prose-h2:text-3xl lg:prose-h2:text-4xl"
+          dangerouslySetInnerHTML={renderHTML(content)}
+        />
+      )}
     </section>
   );
 };
@@ -46,6 +48,7 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
 export default function ProjectsAndProgramsDetailsContent({
   sectionConfigs,
   storageUrl,
+  programData,
   slug,
   ...pageData
 }) {
@@ -59,6 +62,11 @@ export default function ProjectsAndProgramsDetailsContent({
   const bannerSection = dynamicSections.find(s => s.component === 'PageBannerSection');
   const otherDynamicSections = dynamicSections.filter(s => s.component !== 'PageBannerSection');
 
+  const updatedPageData = {
+    ...pageData,
+    programContentData: programData,
+  };
+
   return (
     <>
       {/* Banner */}
@@ -66,7 +74,7 @@ export default function ProjectsAndProgramsDetailsContent({
         <DynamicSectionRenderer
           key={bannerSection.id}
           section={bannerSection}
-          pageData={pageData}
+          pageData={updatedPageData}
           globalProps={{ storageUrl }}
         />
       )}
@@ -77,7 +85,7 @@ export default function ProjectsAndProgramsDetailsContent({
           return (
             <ProgramContentSection
               key={section.id}
-              programData={pageData.programContentData}
+              programData={programData}
               slug={slug}
               {...section.custom_props}
             />
@@ -91,7 +99,7 @@ export default function ProjectsAndProgramsDetailsContent({
         <DynamicSectionRenderer
           key={section.id}
           section={section}
-          pageData={pageData}
+          pageData={updatedPageData}
           globalProps={{ storageUrl }}
         />
       ))}

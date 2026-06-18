@@ -1,26 +1,26 @@
 // dus-frontend/src/App.jsx
 
-// React
+import { Suspense, lazy } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-// Dynamic Page
+// Tanstack
 import { useQuery } from '@tanstack/react-query';
-
-// Pages
-import Home from './pages/Home/Home';
-import About from './pages/About/About';
-import Blogs from './pages/Blogs/Blogs';
-import ContactUs from './pages/ContactUs/ContactUs';
-import BlogDetails from './pages/BlogDetails/BlogDetails';
-import AboutDetails from './pages/AboutDetails/AboutDetails';
-import ProjectsAndPrograms from './pages/ProjectsAndPrograms/ProjectsAndPrograms';
-import ProjectsAndProgramsDetails from './pages/ProjectsAndProgramsDetails/ProjectsAndProgramsDetails';
 
 // Hooks
 import useAxiosPublic from './hooks/useAxiosPublic';
 
-// Page Component Registry - Map page slugs to their components
+// Lazy load pages for code splitting
+const Home = lazy(() => import('./pages/Home/Home'));
+const About = lazy(() => import('./pages/About/About'));
+const Blogs = lazy(() => import('./pages/Blogs/Blogs'));
+const ContactUs = lazy(() => import('./pages/ContactUs/ContactUs'));
+const BlogDetails = lazy(() => import('./pages/BlogDetails/BlogDetails'));
+const AboutDetails = lazy(() => import('./pages/AboutDetails/AboutDetails'));
+const ProjectsAndPrograms = lazy(() => import('./pages/ProjectsAndPrograms/ProjectsAndPrograms'));
+const ProjectsAndProgramsDetails = lazy(() => import('./pages/ProjectsAndProgramsDetails/ProjectsAndProgramsDetails'));
+
+// Constants
 const PAGE_COMPONENTS = {
   'home': Home,
   'about': About,
@@ -32,163 +32,115 @@ const PAGE_COMPONENTS = {
   'projects-programs-details': ProjectsAndProgramsDetails,
 };
 
-// Default page component fallback
-const DefaultPage = ({ pageTitle }) => {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
-      <div className="max-w-2xl mx-auto text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{pageTitle || 'Page'}</h1>
-        <p className="text-gray-600">This page is currently being built.</p>
-      </div>
-    </div>
-  );
+// Constants - Route paths
+const ROUTE_PATHS = {
+  'home': '/',
+  'about': '/about',
+  'about-details': '/about/:slug',
+  'blogs': '/blogs',
+  'blog-details': '/blog/:slug',
+  'contact': '/contact',
+  'projects-programs': '/projects-programs',
+  'projects-programs-details': '/projects-programs/:slug',
 };
 
-// Route path mapping for special slugs
-const getRoutePath = (slug) => {
-  const pathMap = {
-    'home': '/',
-    'about': '/about',
-    'about-details': '/about/:slug',
-    'blogs': '/blogs',
-    'blog-details': '/blog/:slug',
-    'contact': '/contact',
-    'projects-programs': '/projects-programs',
-    'projects-programs-details': '/projects-programs/:slug',
-  };
+// Page components - Loading
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-[#009BE2] border-t-transparent rounded-full animate-spin mx-auto" />
+      <p className="mt-4 text-[#515151]">Loading...</p>
+    </div>
+  </div>
+);
 
-  return pathMap[slug] || `/${slug}`;
+// Page components - Error
+const ErrorDisplay = ({ onRetry }) => (
+  <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="text-center max-w-md">
+      <div className="text-6xl mb-4">⚠️</div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+      <p className="text-gray-600 mb-4">We couldn't load the page data. Please try again later.</p>
+      <button
+        onClick={onRetry}
+        className="bg-[#009BE2] text-white px-6 py-2 rounded-lg hover:bg-[#009BE2]/80 transition-colors"
+      >
+        Retry
+      </button>
+    </div>
+  </div>
+);
+
+// Page components - Not found
+const NotFound = () => (
+  <div className="min-h-[60vh] flex items-center justify-center px-4">
+    <div className="text-center">
+      <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h2>
+      <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
+      <a href="/" className="bg-[#009BE2] text-white px-6 py-2 rounded-lg hover:bg-[#009BE2]/80 transition-colors inline-block">
+        Go Home
+      </a>
+    </div>
+  </div>
+);
+
+// Page components - Default
+const DefaultPage = ({ pageTitle }) => (
+  <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
+    <div className="max-w-2xl mx-auto text-center">
+      <h1 className="text-4xl font-bold text-gray-900 mb-4">{pageTitle || 'Page'}</h1>
+      <p className="text-gray-600">This page is currently being built.</p>
+    </div>
+  </div>
+);
+
+// Custom hook for page data
+const usePageData = () => {
+  const axiosPublic = useAxiosPublic();
+  return useQuery({
+    queryKey: ['pageData'],
+    queryFn: () => axiosPublic.get('/public/data/pages.json').then(res => res.data),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 2, // Retry twice on failure
+  });
 };
 
 function App() {
-  const axiosPublic = useAxiosPublic();
+  const { isPending, error, data, refetch } = usePageData();
 
-  // Fetch page data using axiosPublic
-  const {
-    isPending: pageDataPending,
-    error: pageDataError,
-    data: pageData
-  } = useQuery({
-    queryKey: ['pageData'],
-    queryFn: async () => {
-      const response = await axiosPublic.get('/public/data/pages.json');
-      return response.data;
-    },
-  });
+  if (isPending) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay onRetry={() => refetch()} />;
 
-  // Handle loading state
-  if (pageDataPending) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#009BE2] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-[#515151] font-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle error state
-  if (pageDataError) {
-    console.error('Page Data Error:', pageDataError);
-
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">
-            We couldn't load the page data. Please try again later.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-[#009BE2] text-white px-6 py-2 rounded-lg hover:bg-[#009BE2]/80 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-
-  // Get page data from API response
-  const pages = pageData?.data || [];
-
-  // Generate routes dynamically based on page data
-  const renderRoutes = () => {
-    const routes = [];
-
-    // Helper to create route elements
-    const createRoute = (path, Component, props = {}) => {
-      return (
-        <Route
-          key={path}
-          path={path}
-          element={<Component {...props} />}
-        />
-      );
-    };
-
-    // Map each page to a route
-    pages.forEach((page) => {
-      const Component = PAGE_COMPONENTS[page.slug];
-      const routePath = getRoutePath(page.slug);
-
-      if (Component) {
-
-        // Add route
-        routes.push(
-          createRoute(routePath, Component, {
-            pageInfo: page,
-          })
-        );
-
-        // console.log(`✅ Route registered: ${routePath} → ${page.name} (${page.slug})`);
-      } else {
-        // console.warn(`⚠️ No component found for page slug: ${page.slug}`);
-
-        // Create a fallback route for unknown pages
-        routes.push(
-          createRoute(routePath, DefaultPage, {
-            pageTitle: page.title || page.name || 'Page',
-          })
-        );
-      }
-    });
-
-    // Add a catch-all route for 404
-    routes.push(
-      <Route
-        key="404"
-        path="*"
-        element={
-          <div className="min-h-[60vh] flex items-center justify-center px-4">
-            <div className="text-center">
-              <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h2>
-              <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
-              <a
-                href="/"
-                className="bg-[#009BE2] text-white px-6 py-2 rounded-lg hover:bg-[#009BE2]/80 transition-colors inline-block"
-              >
-                Go Home
-              </a>
-            </div>
-          </div>
-        }
-      />
-    );
-
-    return routes;
-  };
+  const pages = data?.data || [];
 
   return (
     <HelmetProvider>
       <Router>
-        <Routes>
-          {renderRoutes()}
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {pages.map((page) => {
+              const Component = PAGE_COMPONENTS[page.slug];
+              const path = ROUTE_PATHS[page.slug] || `/${page.slug}`;
+              const props = { pageInfo: page };
+
+              return (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    Component ? (
+                      <Component {...props} />
+                    ) : (
+                      <DefaultPage pageTitle={page.title || page.name || 'Page'} />
+                    )
+                  }
+                />
+              );
+            })}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </Router>
     </HelmetProvider>
   );
