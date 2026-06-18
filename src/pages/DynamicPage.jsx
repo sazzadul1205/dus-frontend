@@ -289,8 +289,6 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     </Helmet>
   );
 
-  console.log(pageConfigs);
-
   // Render children if provided
   if (children) {
     return (

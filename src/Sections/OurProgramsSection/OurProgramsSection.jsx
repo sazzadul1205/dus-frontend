@@ -19,8 +19,18 @@ const hasValue = (value) => {
   return true;
 };
 
+const DEFAULT_SECTION = {
+  title: 'Our Programs',
+  description: 'Explore the key programs and initiatives we run to support communities, build resilience, and create lasting impact.',
+  button: {
+    text: 'View All Programs',
+    link: '/projects-programs',
+  },
+};
+
 const OurProgramsSection = ({
   data,
+  pageSlug = '',
   bgColor = 'bg-white',
   paddingY = 'py-12 sm:py-16 lg:py-20',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
@@ -86,9 +96,27 @@ const OurProgramsSection = ({
     programList = data;
   }
 
-  const hasTitle = hasValue(section.title);
-  const hasDescription = hasValue(section.description);
-  const hasButton = hasValue(section.button?.text);
+  const useDefaultHeader = pageSlug === 'home';
+
+  const header = useDefaultHeader
+    ? {
+        ...DEFAULT_SECTION,
+        ...section,
+        button: {
+          ...DEFAULT_SECTION.button,
+          ...(section.button || {}),
+        },
+      }
+    : {
+        ...section,
+        button: {
+          ...(section.button || {}),
+        },
+      };
+
+  const hasTitle = hasValue(header.title);
+  const hasDescription = hasValue(header.description);
+  const hasButton = hasValue(header.button?.text);
 
   const showHeader = hasTitle || hasDescription || hasButton;
   const hasPrograms = hasValue(programList);
@@ -161,22 +189,22 @@ const OurProgramsSection = ({
             <div className="max-w-250">
               {hasTitle && (
                 <h1 className="bricolage-grotesque font-700 text-[28px] sm:text-[32px] md:text-[36px] lg:text-[40px] text-[#080C14] pb-3 sm:pb-4 lg:pb-5">
-                  {section.title}
+                  {header.title}
                 </h1>
               )}
               {hasDescription && (
                 <p className="font-400 text-[16px] sm:text-[18px] lg:text-[20px] text-[#515151]">
-                  {section.description}
+                  {header.description}
                 </p>
               )}
             </div>
           )}
           {hasButton && (
             <Link
-              to={section.button?.link || '/projects-programs'}
+              to={header.button?.link || '/projects-programs'}
               className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-4 lg:py-5 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap"
             >
-              {section.button.text}
+              {header.button.text}
               <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
             </Link>
           )}

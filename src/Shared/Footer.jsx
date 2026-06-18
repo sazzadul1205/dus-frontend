@@ -102,8 +102,7 @@ const Footer = ({ footerData }) => {
         setTimeout(() => setSubmitMessage(''), 3000);
       }, 1000);
     } catch (error) {
-      console.log("Error: ", error);
-
+      console.error(error);
       setSubmitMessage('Subscription failed. Please try again.');
       setIsSubmitting(false);
       setTimeout(() => setSubmitMessage(''), 3000);
