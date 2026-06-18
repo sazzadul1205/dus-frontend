@@ -10,55 +10,65 @@ import SectionLoader from './SectionLoader';
 import { SECTION_COMPONENTS, SECTION_CONFIGS } from '../config/sectionRegistry';
 
 const DynamicSectionRenderer = ({
-  section,           // Section config from SECTION_ORDER_CONFIG
-  pageData,          // All page data (sectionDataMap)
-  globalProps = {}   // Global props like storageUrl
+  section,
+  pageData,
+  globalProps = {}
 }) => {
-
-  console.log(section);
-
   const {
     id,
     component: componentName,
     propName,
     dataKey,
-    customProps = {},
+    // Handle both field names
+    custom_props,
+    customProps: customPropsCamel,
   } = section;
 
   // Get the component from registry
   const Component = SECTION_COMPONENTS[componentName];
 
   if (!Component) {
-    console.warn(`Component "${componentName}" not found in registry`);
     return null;
   }
 
-  // Build component props
-  let componentProps = { ...customProps, ...globalProps };
+  // Use the correct field name (prefer custom_props from database)
+  const rawCustomProps = custom_props || customPropsCamel || {};
+
+  // Parse customProps if it's a string
+  let parsedCustomProps = {};
+  if (typeof rawCustomProps === 'string') {
+    try {
+      const parsed = JSON.parse(rawCustomProps);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        parsedCustomProps = parsed;
+      }
+    } catch (e) {
+      console.warn(`[DynamicSectionRenderer] Failed to parse customProps for ${componentName}:`, e);
+    }
+  } else if (rawCustomProps && typeof rawCustomProps === 'object' && !Array.isArray(rawCustomProps)) {
+    parsedCustomProps = rawCustomProps;
+  }
+
+  // Build component props - parsedCustomProps should override globalProps
+  let componentProps = { ...globalProps, ...parsedCustomProps };
 
   // Get config for this component
   const config = SECTION_CONFIGS[componentName];
 
   if (config?.isMultiProp) {
-    // Handle multi-prop components (like BlogSection)
     config.props.forEach(prop => {
       if (pageData[prop] !== undefined) {
         componentProps[prop] = pageData[prop];
       }
     });
   } else if (propName && dataKey) {
-    // Handle standard single prop sections
-    // Try multiple ways to get the data
     let dataValue = pageData[dataKey];
 
-    // If not found, try with the transformed key (kebab-case)
     if (dataValue === undefined && dataKey) {
-      // Try to transform the key
       const kebabKey = dataKey.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
       dataValue = pageData[kebabKey];
     }
 
-    // If still not found, try the propName as a key
     if (dataValue === undefined && propName) {
       dataValue = pageData[propName];
       const kebabPropName = propName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
@@ -69,7 +79,6 @@ const DynamicSectionRenderer = ({
 
     componentProps[propName] = dataValue;
   } else if (propName) {
-    // Fallback: use propName as both prop and dataKey
     let dataValue = pageData[propName];
     if (dataValue === undefined) {
       const kebabPropName = propName.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
@@ -80,7 +89,6 @@ const DynamicSectionRenderer = ({
 
   // If component expects 'data' prop, try to find it
   if (componentProps[propName] === undefined) {
-    // Try to find any data that might match
     const possibleKeys = [
       section.data_key,
       propName,

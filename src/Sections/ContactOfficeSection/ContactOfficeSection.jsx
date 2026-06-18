@@ -20,12 +20,20 @@ const ContactOfficeSection = ({
   sectionClassName = '',
   sectionId = 'contact-offices',
 }) => {
-  // Safe destructuring with defaults
-  const {
-    offices = [],
-    title = "Our Offices",
-    orgName = "Dwip Unnayan Songstha (DUS)",
-  } = data || {};
+  // Handle both formats: { offices: [] } OR direct array []
+  let offices = [];
+  let title = "Our Offices";
+  let orgName = "Dwip Unnayan Songstha (DUS)";
+
+  if (Array.isArray(data)) {
+    // Direct array format
+    offices = data;
+  } else if (data && typeof data === 'object') {
+    // Object format with offices property
+    offices = data.offices || [];
+    title = data.title || title;
+    orgName = data.orgName || orgName;
+  }
 
   // Early return if no data
   if (!hasValue(offices) || offices.length === 0) {

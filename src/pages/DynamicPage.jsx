@@ -48,8 +48,19 @@ export default function DynamicPage({
     enabled: !!pageSlug
   });
 
-  console.log("--- Sectiuon Config", sectionConfigsData);
-
+  // Fetch custom section data
+  const {
+    data: customSectionData,
+    isLoading: customLoading,
+    error: customError
+  } = useQuery({
+    queryKey: ['customSectionData', pageSlug],
+    queryFn: async () => {
+      const response = await axiosPublic.get('/public/data/custom_section_data.json');
+      return response.data;
+    },
+    enabled: !!pageSlug
+  });
 
   // DYNAMICALLY determine which shared data types are needed
   const neededSharedDataTypes = useMemo(() => {
@@ -114,6 +125,30 @@ export default function DynamicPage({
     return result;
   }, [sharedData, neededSharedDataTypes]);
 
+  // Process custom section data - ONLY for the current page
+  const parsedCustomData = useMemo(() => {
+    if (!customSectionData?.data) {
+      return {};
+    }
+
+    const result = {};
+    customSectionData.data.forEach(item => {
+      // Only include data for the current page
+      if (item.page_slug === pageSlug && item.data && item.is_active === 1) {
+        try {
+          // Parse the JSON string data
+          const parsedData = JSON.parse(item.data);
+          // Store by section_key
+          result[item.section_key] = parsedData;
+        } catch (e) {
+          console.error(`Failed to parse custom data for ${item.section_key}:`, e);
+        }
+      }
+    });
+
+    return result;
+  }, [customSectionData, pageSlug]);
+
   // Filter section configs for the current page
   const pageConfigs = useMemo(() => {
     if (!sectionConfigsData?.data) {
@@ -121,11 +156,11 @@ export default function DynamicPage({
     }
 
     return sectionConfigsData.data
-      .filter(config => config.page_slug === pageSlug)
+      .filter(config => config.page_slug === pageSlug && config.is_enabled === 1)
       .sort((a, b) => a.display_order - b.display_order);
   }, [sectionConfigsData, pageSlug]);
 
-  // Build pageData for each section - UPDATED to store data under both keys
+  // Build pageData for each section
   const pageData = useMemo(() => {
     const data = {};
 
@@ -141,23 +176,36 @@ export default function DynamicPage({
           const value = parsedSharedData[type] || null;
 
           // Store under BOTH keys for maximum compatibility
-          // Original key (e.g., 'upcomingEventsData') - for components that expect this
           data[section.data_key] = value;
-          // Transformed key (e.g., 'upcoming-events') - for components that use this
           data[type] = value;
         }
-      } else if (section.data_table) {
-        // For custom data tables, use props
+      }
+      // If section uses custom_section_data, get it from parsedCustomData
+      else if (section.data_table === 'custom_section_data') {
+        const sectionKey = section.section_key;
+        const value = parsedCustomData[sectionKey] || null;
+
+        // Store under the data_key if provided
+        if (section.data_key) {
+          data[section.data_key] = value;
+        }
+        // Also store under the section_key
+        data[sectionKey] = value;
+      }
+      // For other data tables (like 'programs'), use props
+      else if (section.data_table) {
         const value = props[section.data_key] || null;
-        data[section.data_key] = value;
+        if (section.data_key) {
+          data[section.data_key] = value;
+        }
       }
     });
 
     return data;
-  }, [pageConfigs, parsedSharedData, props]);
+  }, [pageConfigs, parsedSharedData, parsedCustomData, props]);
 
   // Loading state
-  if (configsLoading || sharedLoading) {
+  if (configsLoading || sharedLoading || customLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -169,8 +217,8 @@ export default function DynamicPage({
   }
 
   // Error state
-  if (configsError || sharedError) {
-    console.error('Data Error:', { configsError, sharedError });
+  if (configsError || sharedError || customError) {
+    console.error('Data Error:', { configsError, sharedError, customError });
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">

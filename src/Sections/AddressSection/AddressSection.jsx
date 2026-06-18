@@ -60,7 +60,17 @@ const AddressSection = ({
   sectionClassName = '',
   sectionId = 'address-section',
 }) => {
-  const offices = data?.offices || [];
+  // Handle both formats: { offices: [] } OR direct array []
+  let offices = [];
+
+  if (Array.isArray(data)) {
+    // Direct array format
+    offices = data;
+  } else if (data && typeof data === 'object') {
+    // Object format with offices property
+    offices = data.offices || [];
+  }
+
   const [activeOffice, setActiveOffice] = useState(offices[0] || null);
 
   // Early return if no data
@@ -145,4 +155,4 @@ const AddressSection = ({
   );
 };
 
-export default AddressSection;
+export default AddressSection

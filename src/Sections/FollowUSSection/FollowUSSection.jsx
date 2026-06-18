@@ -38,11 +38,18 @@ const FollowUSSection = ({
   sectionClassName = '',
   sectionId = 'follow-us',
 }) => {
-  // Safe destructuring with defaults
-  const {
-    socialItems = [],
-    title = "Follow Us",
-  } = data || {};
+  // Handle both formats: { socialItems: [] } OR direct array []
+  let socialItems = [];
+  let title = "Follow Us";
+
+  if (Array.isArray(data)) {
+    // Direct array format
+    socialItems = data;
+  } else if (data && typeof data === 'object') {
+    // Object format with socialItems property
+    socialItems = data.socialItems || [];
+    title = data.title || title;
+  }
 
   // Early return if no data
   if (!hasValue(socialItems) || socialItems.length === 0) {
