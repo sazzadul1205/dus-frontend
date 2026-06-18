@@ -1,7 +1,7 @@
 // dus-frontend/src/pages/DynamicPage.jsx
 
 // React
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
@@ -35,25 +35,51 @@ const TITLES = {
 // Default page title and description
 const DEFAULT_DESC = 'Dwip Unnayan Society (DUS) is a community-based philanthropic organization dedicated to sustainable poverty reduction and community development.';
 
+// Map route patterns to page slugs
+const getPageSlugFromPath = (pathname) => {
+  const path = pathname.replace(/^\/+|\/+$/g, '');
+  const segments = path.split('/');
+
+  // Check for details pages first (they have 2 segments)
+  if (segments.length >= 2) {
+    const baseSlug = segments[0];
+    // If first segment is one of these, it's a details page
+    if (baseSlug === 'blogs') {
+      return 'blog-details';
+    }
+    if (['about', 'projects-programs'].includes(baseSlug)) {
+      return `${baseSlug}-details`;
+    }
+  }
+
+  // Return the first segment or 'home'
+  return segments[0] || 'home';
+};
+
 export default function DynamicPage({ pageInfo, children, customTitle, ...props }) {
   const location = useLocation();
   const axiosPublic = useAxiosPublic();
 
   // Get page slug
   const pageSlug = useMemo(() => {
-    const path = location.pathname.replace(/^\/+|\/+$/g, '');
-    return path ? path.split('/')[0] : 'home';
-  }, [location]);
+    return getPageSlugFromPath(location.pathname);
+  }, [location.pathname]);
 
-  // Fetch all data in parallel
+  // Fetch section configs - ALWAYS enabled
   const {
     data: configsData,
     error: configsError,
     isLoading: configsLoading,
   } = useQuery({
     queryKey: ['sectionConfigs', pageSlug],
-    queryFn: () => axiosPublic.get(`/public/data/section_configs.json?page_slug=${pageSlug}`).then(res => res.data),
-    enabled: !!pageSlug
+    queryFn: async () => {
+      // Fetch ALL section configs and filter on client side
+      const response = await axiosPublic.get('/public/data/section_configs.json');
+      // Filter for the current page
+      const filtered = response.data?.data?.filter(c => c.page_slug === pageSlug && c.is_enabled === 1) || [];
+      return { data: filtered };
+    },
+    enabled: !!pageSlug,
   });
 
   // Fetch custom data
@@ -138,13 +164,11 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     }, {});
   }, [customData, pageSlug]);
 
-  // Get page configs and data
+  // Get page configs - now configsData.data is already filtered
   const pageConfigs = useMemo(() => {
     if (!configsData?.data) return [];
-    return configsData.data
-      .filter(c => c.page_slug === pageSlug && c.is_enabled === 1)
-      .sort((a, b) => a.display_order - b.display_order);
-  }, [configsData, pageSlug]);
+    return [...configsData.data].sort((a, b) => a.display_order - b.display_order);
+  }, [configsData]);
 
   // Get page data
   const pageData = useMemo(() => {
@@ -244,12 +268,20 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     </Helmet>
   );
 
+  console.log(pageConfigs);
+
   // Render children if provided
   if (children) {
     return (
       <PublicLayout {...layoutData}>
         {seoHelmet}
-        {children}
+        {React.cloneElement(children, {
+          programsData: pageData.programsData || [],
+          blogsData: pageData.blogsData || [],
+          sectionConfigs: pageConfigs,
+          pageData: pageData,
+          storageUrl: STORAGE_URL
+        })}
       </PublicLayout>
     );
   }

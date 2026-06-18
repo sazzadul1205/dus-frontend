@@ -52,9 +52,6 @@ export const SECTION_CONFIGS = {
   OurProgramsSection: { propName: 'data', isMultiProp: false },
   UpcomingEventsSection: { propName: 'data', isMultiProp: false },
   
-  // Multi-prop sections (BlogSection needs special handling)
-  BlogSection: { 
-    isMultiProp: true, 
-    props: ['mainBlog', 'blogPosts', 'sectionTitle'],
-  },
+  // BlogSection consumes a single data prop plus optional custom props
+  BlogSection: { propName: 'data', isMultiProp: false },
 };

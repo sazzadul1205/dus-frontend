@@ -555,8 +555,8 @@
       "display_order": 1,
       "is_enabled": 1,
       "is_fixed_section": 1,
-      "is_special_component": 1,
-      "custom_props": "[]",
+      "is_special_component": 0,
+      "custom_props": "{\"sectionId\":\"blog-banner\"}",
       "created_at": "2024-01-01 00:00:00",
       "updated_at": "2024-01-01 00:00:00"
     },
@@ -571,8 +571,8 @@
       "display_order": 2,
       "is_enabled": 1,
       "is_fixed_section": 1,
-      "is_special_component": 1,
-      "custom_props": "{\"bgColor\":\"bg-white\",\"paddingY\":\"py-12 lg:py-16\",\"paddingX\":\"px-4\"}",
+      "is_special_component": 0,
+      "custom_props": "{\"bgColor\":\"bg-white\",\"paddingY\":\"py-12 lg:py-16\",\"paddingX\":\"px-4\",\"sectionId\":\"blog-content\"}",
       "created_at": "2024-01-01 00:00:00",
       "updated_at": "2024-01-01 00:00:00"
     },

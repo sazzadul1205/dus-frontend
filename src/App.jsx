@@ -38,7 +38,7 @@ const ROUTE_PATHS = {
   'about': '/about',
   'about-details': '/about/:slug',
   'blogs': '/blogs',
-  'blog-details': '/blog/:slug',
+  'blog-details': '/blogs/:slug',
   'contact': '/contact',
   'projects-programs': '/projects-programs',
   'projects-programs-details': '/projects-programs/:slug',
