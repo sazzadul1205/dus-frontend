@@ -1,18 +1,48 @@
 // dus-frontend/src/Sections/UpcomingEventsSection/UpcomingEventsSection.jsx
 
-// React
+/**
+ * ============================================
+ * UPCOMING EVENTS SECTION - Events Listing
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays upcoming events in a list
+ * - Each event shows date, location, title, description
+ * - "View Event" link for each
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title, description, button: { text, link } },
+ *   image: { src, alt, className },
+ *   events: [
+ *     {
+ *       id,
+ *       date: { day, month, weekday, dayNumber, time },
+ *       location: "Dhaka, Bangladesh",
+ *       title: "Annual Fundraising Gala",
+ *       description: "Join us for our annual fundraising event...",
+ *       link: "/events/annual-gala"
+ *     }
+ *   ]
+ * }
+ * 
+ * FEATURES:
+ * - Two-column layout (left: title/desc/image, right: events)
+ * - Date box with day, month, weekday, time
+ * - Hover effects on event cards (lift + shadow)
+ * - Clickable whole card (with stopPropagation on button)
+ * 
+ * ============================================
+ */
+
 import { Link } from 'react-router-dom';
-
-// Arrow Icon
 import ArrowIcon from '../../Shared/ArrowIcon';
-
-// Icons
 import { CiLocationOn } from "react-icons/ci";
-
-// Image Component with Fallback
 import ImageWithFallback from '../../Shared/ImageWithFallback';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -21,6 +51,20 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * UpcomingEventsSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - Events data with section, image, events
+ * @param {string} props.bgColor - Background color (default: 'bg-[#FFFFFF]')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'upcoming-events')
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered upcoming events section
+ */
 const UpcomingEventsSection = ({
   data,
   bgColor = 'bg-[#FFFFFF]',
@@ -30,13 +74,19 @@ const UpcomingEventsSection = ({
   sectionId = 'upcoming-events',
   storageUrl = '',
 }) => {
-  // Early return if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) return null;
 
-  // Safe destructuring with defaults
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const { section = {}, image = {}, events = [] } = data;
 
-  // Check if there's any content to display
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasTitle = hasValue(section.title);
   const hasDescription = hasValue(section.description);
   const hasButton = hasValue(section.button?.text);
@@ -47,7 +97,13 @@ const UpcomingEventsSection = ({
 
   if (!hasAnyContent) return null;
 
-  // Get image URL helper with storage URL support
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -55,6 +111,9 @@ const UpcomingEventsSection = ({
     return imagePath;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
@@ -62,7 +121,9 @@ const UpcomingEventsSection = ({
     >
       <div className='flex flex-col lg:flex-row justify-between gap-8 lg:gap-25'>
 
-        {/* Left Section */}
+        {/* ============================================
+            LEFT SECTION - Title, Description, Image
+            ============================================ */}
         {(hasTitle || hasDescription || hasButton || hasImage) && (
           <div className='w-full lg:min-w-150 lg:w-auto'>
             <div className='gap-6'>
@@ -81,7 +142,7 @@ const UpcomingEventsSection = ({
                 </p>
               )}
 
-              {/* Button */}
+              {/* CTA Button */}
               {hasButton && (
                 <Link
                   to={section.button?.link || '#'}
@@ -93,7 +154,7 @@ const UpcomingEventsSection = ({
               )}
             </div>
 
-            {/* Image - Using ImageWithFallback */}
+            {/* Image */}
             {hasImage && (
               <div className="mt-8 sm:mt-10 lg:mt-15">
                 <ImageWithFallback
@@ -107,7 +168,9 @@ const UpcomingEventsSection = ({
           </div>
         )}
 
-        {/* Right Section - Events List */}
+        {/* ============================================
+            RIGHT SECTION - Events List
+            ============================================ */}
         {hasEvents && (
           <div className='w-full space-y-5 sm:space-y-6 lg:space-y-7.5 mt-8 lg:mt-0'>
             {events.map((event) => (
@@ -120,7 +183,7 @@ const UpcomingEventsSection = ({
                   }
                 }}
               >
-                {/* Date Box - Only show if date data exists */}
+                {/* Date Box */}
                 {hasValue(event.date) && (
                   <div className='w-full sm:w-46 bg-[#FFFFFF] rounded-2xl py-5 sm:py-8 px-2 text-center sm:min-w-50 group-hover:bg-[#009BE2] transition-colors duration-300'>
                     {/* Day */}
@@ -129,14 +192,12 @@ const UpcomingEventsSection = ({
                         {event.date.day}
                       </h3>
                     )}
-
                     {/* Month */}
                     {hasValue(event.date.month) && (
                       <h4 className='text-[#080C14] font-800 text-[36px] sm:text-[44px] lg:text-[50px] leading-tight group-hover:text-white transition-colors duration-300'>
                         {event.date.month}
                       </h4>
                     )}
-
                     {/* Weekday, DayNumber, Time */}
                     {(hasValue(event.date.weekday) || hasValue(event.date.dayNumber) || hasValue(event.date.time)) && (
                       <p className='text-[#524B48] font-400 text-[12px] sm:text-[14px] lg:text-[16px] group-hover:text-white/90 transition-colors duration-300'>
@@ -182,7 +243,7 @@ const UpcomingEventsSection = ({
                   <Link
                     to={event.link || '#'}
                     className="bricolage-grotesque text-[#009BE2] font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center gap-2 sm:gap-3 group/btn hover:text-[#009BE2]/70 transition-all duration-300 whitespace-nowrap"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()} // Prevent card click
                   >
                     View Event
                     <ArrowIcon className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all duration-300" />

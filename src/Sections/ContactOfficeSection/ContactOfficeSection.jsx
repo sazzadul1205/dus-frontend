@@ -1,9 +1,46 @@
 // dus-frontend/src/Sections/ContactOfficeSection/ContactOfficeSection.jsx
 
-// Icons
+/**
+ * ============================================
+ * CONTACT OFFICE SECTION - Office Contact Cards
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays office contact information in card format
+ * - Shows address, phone numbers, and emails
+ * - Used on the Contact Us page
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   title: "Our Offices",
+ *   orgName: "Dwip Unnayan Songstha (DUS)",
+ *   offices: [
+ *     {
+ *       title: "Head Office",
+ *       icon: "image-url.png",
+ *       address: "123 Main St, Dhaka",
+ *       phones: "+880 1234 567890",
+ *       emails: ["info@dus.org.bd", "admin@dus.org.bd"]
+ *     }
+ *   ]
+ * }
+ * - OR -
+ * [ { title, address, phones, emails }, ... ]
+ * 
+ * FEATURES:
+ * - Grid layout (1, 2, or 3 columns)
+ * - Office icons (custom or default graduation cap)
+ * - Hover animations (lift + shadow)
+ * - Email links (mailto:)
+ * 
+ * ============================================
+ */
+
 import { FaGraduationCap } from 'react-icons/fa';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -12,6 +49,19 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * ContactOfficeSection Component
+ * 
+ * @param {Object} props
+ * @param {Object|Array} props.data - Office data (object with offices OR direct array)
+ * @param {string} props.bgColor - Background color (default: 'bg-white')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'contact-offices')
+ * 
+ * @returns {JSX.Element} Rendered contact offices section
+ */
 const ContactOfficeSection = ({
   data,
   bgColor = 'bg-white',
@@ -20,33 +70,44 @@ const ContactOfficeSection = ({
   sectionClassName = '',
   sectionId = 'contact-offices',
 }) => {
-  // Handle both formats: { offices: [] } OR direct array []
+  // ============================================
+  // NORMALIZE DATA - Handle both formats
+  // ============================================
   let offices = [];
   let title = "Our Offices";
   let orgName = "Dwip Unnayan Songstha (DUS)";
 
   if (Array.isArray(data)) {
-    // Direct array format
     offices = data;
   } else if (data && typeof data === 'object') {
-    // Object format with offices property
     offices = data.offices || [];
     title = data.title || title;
     orgName = data.orgName || orgName;
   }
 
-  // Early return if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(offices) || offices.length === 0) {
     return null;
   }
 
-  // Get image URL with fallback for office icons if needed
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Get image URL with fallback for office icons
+   */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Office';
     if (imagePath.startsWith('http')) return imagePath;
     return imagePath;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
@@ -60,13 +121,14 @@ const ContactOfficeSection = ({
           </h2>
         )}
 
+        {/* Office Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {offices.map((office, index) => (
             <div
               key={office.title || index}
               className="rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 md:p-10 lg:p-12.5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              {/* Icon - Use custom icon if provided, otherwise use FaGraduationCap */}
+              {/* Office Icon */}
               {office.icon ? (
                 <img
                   src={getImageUrl(office.icon)}
@@ -84,6 +146,7 @@ const ContactOfficeSection = ({
                 </h3>
               )}
 
+              {/* Office Details */}
               <div className="space-y-2 text-[14px] sm:text-[15px] leading-relaxed text-[#444] mt-3">
                 {/* Organization Name */}
                 {hasValue(orgName) && (
@@ -106,7 +169,7 @@ const ContactOfficeSection = ({
                   </p>
                 )}
 
-                {/* Emails */}
+                {/* Emails - Clickable mailto links */}
                 {hasValue(office.emails) && office.emails.length > 0 && (
                   <p className="flex gap-2 flex-wrap">
                     <span className="font-semibold text-[#333333] shrink-0">E-mail:</span>

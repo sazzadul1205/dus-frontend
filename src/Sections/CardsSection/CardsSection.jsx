@@ -1,13 +1,46 @@
 // dus-frontend/src/Sections/CardsSection/CardsSection.jsx
 
-// React
-import { Link } from 'react-router-dom';
+/**
+ * ============================================
+ * CARDS SECTION - Two-Column Card Layout
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays cards in a two-column layout
+ * - Each card has an image and a text section with button
+ * - Used for showcasing programs, services, or features
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   cards: [
+ *     {
+ *       id,
+ *       title,
+ *       bgColor,
+ *       cardBgColor,
+ *       image: { src, alt, className },
+ *       buttonText,
+ *       buttonLink
+ *     }
+ *   ]
+ * }
+ * 
+ * FEATURES:
+ * - Two-column responsive layout (stack on mobile)
+ * - Customizable background colors per card
+ * - Image with fallback support
+ * - CTA buttons with arrow icons
+ * 
+ * ============================================
+ */
 
-// Components
+import { Link } from 'react-router-dom';
 import ArrowIcon from '../../Shared/ArrowIcon';
 import ImageWithFallback from '../../Shared/ImageWithFallback';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -16,6 +49,21 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * CardsSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - Cards data with cards array
+ * @param {string} props.bgColor - Background color (default: 'bg-white')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.gap - Gap between cards (default: 'gap-6 sm:gap-8 md:gap-12 lg:gap-25')
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'cards')
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered cards section
+ */
 const CardsSection = ({
   data,
   bgColor = 'bg-white',
@@ -26,12 +74,22 @@ const CardsSection = ({
   sectionId = 'cards',
   storageUrl = '',
 }) => {
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) return null;
 
   const { cards = [] } = data;
 
   if (!hasValue(cards)) return null;
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -39,6 +97,9 @@ const CardsSection = ({
     return imagePath;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
@@ -47,6 +108,8 @@ const CardsSection = ({
       {cards.map((card) => (
         <div key={card.id} className='w-full lg:w-1/2 flex'>
           <div className={`${card.bgColor || 'bg-white'} w-full rounded-xl sm:rounded-2xl px-4 sm:px-8 md:px-12 lg:px-17 py-6 sm:py-8 md:py-10 lg:py-12.5 flex flex-col`}>
+
+            {/* Card Image */}
             {hasValue(card.image?.src) && (
               <div className='flex items-center justify-center min-h-50 sm:min-h-62.5 md:min-h-75 lg:min-h-87.5 xl:min-h-110'>
                 <ImageWithFallback
@@ -58,14 +121,18 @@ const CardsSection = ({
               </div>
             )}
 
+            {/* Card Text Content */}
             {(hasValue(card.title) || hasValue(card.buttonText)) && (
               <div className={`${card.cardBgColor || 'bg-white'} w-full rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 lg:p-12.5 mt-4 sm:mt-5 md:mt-6 lg:mt-7.5 flex flex-col justify-between min-h-50 sm:min-h-62.5 md:min-h-70 lg:min-h-62.5`}>
+
+                {/* Card Title */}
                 {hasValue(card.title) && (
                   <h1 className='font-700 text-2xl sm:text-3xl md:text-4xl lg:text-[40px] leading-tight'>
                     {card.title}
                   </h1>
                 )}
 
+                {/* Card Button */}
                 {hasValue(card.buttonText) && hasValue(card.buttonLink) && (
                   <div className='pt-3 sm:pt-4 md:pt-5 lg:pt-6'>
                     <Link

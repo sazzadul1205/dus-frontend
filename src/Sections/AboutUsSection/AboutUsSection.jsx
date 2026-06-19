@@ -1,15 +1,39 @@
 // dus-frontend/src/Sections/AboutUsSection/AboutUsSection.jsx
 
-// React
+/**
+ * ============================================
+ * ABOUT US SECTION - Organization Introduction
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays the organization's about information
+ * - Shows mission statement and mission items
+ * - Displays impact statistics
+ * - Features a hero image
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title, description, button: { text, link } },
+ *   mission: { title, items: [{ id, icon, title, description, alt }] },
+ *   impact: { title, stats: [{ id, value, suffix, label }] },
+ *   image: { src, alt, className }
+ * }
+ * 
+ * LAYOUT:
+ * - Left: Text content (About, Mission, Impact)
+ * - Right: Hero image
+ * - Responsive: Stack on mobile
+ * 
+ * ============================================
+ */
+
 import { Link } from 'react-router-dom';
-
-// Arrow Icon
 import ArrowIcon from '../../Shared/ArrowIcon';
-
-// Image Component with Fallback
 import ImageWithFallback from '../../Shared/ImageWithFallback';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -18,6 +42,20 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * AboutUsSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - Section data from API
+ * @param {string} props.bgColor - Background color class (default: 'bg-white')
+ * @param {string} props.paddingY - Vertical padding (default: 'py-10 sm:py-15 md:py-25 lg:py-37.5')
+ * @param {string} props.paddingX - Horizontal padding (default: 'px-5 sm:px-10 md:px-20 lg:px-50')
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID for anchors (default: 'about-us')
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered about section
+ */
 const AboutUsSection = ({
   data,
   bgColor = 'bg-white',
@@ -27,12 +65,16 @@ const AboutUsSection = ({
   sectionId = 'about-us',
   storageUrl = '',
 }) => {
-  // Don't render if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) {
     return null;
   }
 
-  // Safe destructuring with defaults
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const {
     section = {},
     mission = {},
@@ -40,7 +82,9 @@ const AboutUsSection = ({
     image = {}
   } = data;
 
-  // Check if there's any content to display
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasAnyContent = hasValue(section.title) ||
     hasValue(section.description) ||
     hasValue(section.button?.text) ||
@@ -54,7 +98,13 @@ const AboutUsSection = ({
     return null;
   }
 
-  // Get image URL helper
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -62,15 +112,22 @@ const AboutUsSection = ({
     return imagePath;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`flex flex-col lg:flex-row justify-between items-stretch ${bgColor} gap-8 lg:gap-15 ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Left Section - Text Content */}
+      {/* ============================================
+          LEFT SECTION - Text Content
+          ============================================ */}
       <div className='w-full lg:w-1/2 flex flex-col justify-between space-y-10 lg:space-y-15'>
 
-        {/* About Section */}
+        {/* ============================================
+            ABOUT SECTION
+            ============================================ */}
         {(hasValue(section.title) || hasValue(section.description) || hasValue(section.button?.text)) && (
           <div>
             {/* About Title */}
@@ -87,7 +144,7 @@ const AboutUsSection = ({
               </p>
             )}
 
-            {/* About Button */}
+            {/* About Button - CTA to learn more */}
             {hasValue(section.button?.text) && (
               <Link
                 to={section.button?.link || '#'}
@@ -100,7 +157,9 @@ const AboutUsSection = ({
           </div>
         )}
 
-        {/* Mission Section */}
+        {/* ============================================
+            MISSION SECTION
+            ============================================ */}
         {(hasValue(mission.title) || hasValue(mission.items)) && (
           <div>
             {/* Mission Title */}
@@ -110,11 +169,15 @@ const AboutUsSection = ({
               </h1>
             )}
 
-            {/* Mission Items Grid */}
+            {/* Mission Items Grid - 2 columns on tablet+ */}
             {hasValue(mission.items) && (
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-2.5'>
                 {mission.items.map((item) => (
-                  <div key={item.id} className='bg-[#F5F5F5] flex p-4 sm:p-5 lg:p-6 rounded-xl gap-4 group hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
+                  <div
+                    key={item.id}
+                    className='bg-[#F5F5F5] flex p-4 sm:p-5 lg:p-6 rounded-xl gap-4 group hover:shadow-lg transition-all duration-300 hover:-translate-y-1'
+                  >
+                    {/* Mission Icon */}
                     {item.icon && (
                       <ImageWithFallback
                         src={getImageSrc(item.icon)}
@@ -124,11 +187,13 @@ const AboutUsSection = ({
                       />
                     )}
                     <div>
+                      {/* Mission Item Title */}
                       {item.title && (
                         <h3 className='bricolage-grotesque font-600 text-lg sm:text-xl lg:text-xl text-[#080C14] mb-1 lg:mb-2'>
                           {item.title}
                         </h3>
                       )}
+                      {/* Mission Item Description */}
                       {item.description && (
                         <p className='bricolage-grotesque font-400 text-[14px] sm:text-[15px] lg:text-[16px] text-[#515151] leading-relaxed'>
                           {item.description}
@@ -142,7 +207,9 @@ const AboutUsSection = ({
           </div>
         )}
 
-        {/* Impact Section */}
+        {/* ============================================
+            IMPACT SECTION
+            ============================================ */}
         {(hasValue(impact.title) || hasValue(impact.stats)) && (
           <div>
             {/* Impact Title */}
@@ -152,11 +219,15 @@ const AboutUsSection = ({
               </h1>
             )}
 
-            {/* Impact Stats Grid */}
+            {/* Impact Stats Grid - 3 columns */}
             {hasValue(impact.stats) && (
               <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 rounded-md'>
                 {impact.stats.map((stat) => (
-                  <div key={stat.id} className='bg-[#F5F5F5] py-5 sm:py-6 lg:py-7.5 rounded-xl group hover:bg-[#009BE2] transition-all duration-300 hover:-translate-y-1'>
+                  <div
+                    key={stat.id}
+                    className='bg-[#F5F5F5] py-5 sm:py-6 lg:py-7.5 rounded-xl group hover:bg-[#009BE2] transition-all duration-300 hover:-translate-y-1'
+                  >
+                    {/* Stat Value with optional suffix */}
                     {(hasValue(stat.value) || hasValue(stat.suffix)) && (
                       <h3 className='flex items-end font-600 text-[36px] sm:text-[44px] lg:text-[50px] text-[#080C14] text-center justify-center group-hover:text-white transition-colors duration-300'>
                         {stat.value}
@@ -167,6 +238,7 @@ const AboutUsSection = ({
                         )}
                       </h3>
                     )}
+                    {/* Stat Label */}
                     {hasValue(stat.label) && (
                       <p className='font-600 text-[14px] sm:text-[15px] lg:text-[16px] text-[#080C14] text-center justify-center group-hover:text-white transition-colors duration-300'>
                         {stat.label}
@@ -180,7 +252,9 @@ const AboutUsSection = ({
         )}
       </div>
 
-      {/* Right Section - Image */}
+      {/* ============================================
+          RIGHT SECTION - Hero Image
+          ============================================ */}
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
         <ImageWithFallback
           src={getImageSrc(image.src)}

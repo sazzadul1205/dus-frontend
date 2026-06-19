@@ -1,12 +1,39 @@
 // dus-frontend/src/Sections/AddressSection/AddressSection.jsx
 
-// React
-import { useState } from "react";
+/**
+ * ============================================
+ * ADDRESS SECTION - Office Locations with Map
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays multiple office locations with tabs
+ * - Shows an interactive Google Map for each location
+ * - Shows address card overlay on the map
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   offices: [
+ *     { id, label, address, mapUrl },
+ *     ...
+ *   ]
+ * }
+ * - OR -
+ * [ { id, label, address, mapUrl }, ... ]
+ * 
+ * INTERACTIVE FEATURES:
+ * - Tab switching between offices
+ * - Map updates when tab changes
+ * - Address card with "Get Directions" link
+ * 
+ * ============================================
+ */
 
-// Icons
+import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa6";
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -15,6 +42,10 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * OfficeStar - SVG star icon for office tabs
+ * Changes color when active
+ */
 const OfficeStar = ({ active }) => (
   <svg
     width="24"
@@ -31,6 +62,9 @@ const OfficeStar = ({ active }) => (
   </svg>
 );
 
+/**
+ * BuildingIcon - SVG building icon for address card
+ */
 const BuildingIcon = ({ className = "", ...props }) => (
   <svg
     width="23"
@@ -41,6 +75,7 @@ const BuildingIcon = ({ className = "", ...props }) => (
     className={className}
     {...props}
   >
+    {/* Complex building SVG path - shows a multi-story building */}
     <path
       d="M17.5425 0.714355H5.31388C3.18067 0.714355 1.44531 2.44971 1.44531 4.58293V11.6847C1.44531 13.8179 3.18067 15.5533 5.31388 15.5533H7.0246C7.92067 15.5533 8.76388 15.9426 9.35495 16.5926C6.63924 16.8865 4.08888 17.804 4.08888 19.3111C4.08888 21.1504 7.87031 22.1433 11.4282 22.1433C14.986 22.1433 18.7675 21.1508 18.7675 19.3111C18.7675 17.804 16.2167 16.8865 13.5014 16.5926C14.0928 15.9429 14.9357 15.5533 15.8317 15.5533H17.5425C19.6757 15.5533 21.411 13.8179 21.411 11.6847V4.58293C21.411 2.44971 19.6757 0.714355 17.5425 0.714355ZM18.0532 19.3108C18.0532 20.3126 15.3325 21.4286 11.4282 21.4286C7.52388 21.4286 4.80317 20.3126 4.80317 19.3108C4.80317 18.499 6.68174 17.5279 9.83353 17.2644L11.1189 19.4904C11.1828 19.6011 11.3007 19.669 11.4282 19.669C11.5557 19.669 11.6739 19.6011 11.7375 19.4904L13.0228 17.2644C16.1746 17.5279 18.0532 18.499 18.0532 19.3108ZM20.6967 11.6844C20.6967 13.4236 19.2817 14.8386 17.5425 14.8386H15.8317C14.4546 14.8386 13.1707 15.5797 12.4814 16.7729L11.4282 18.5972L10.375 16.7729C9.68567 15.5797 8.4021 14.8386 7.0246 14.8386H5.31388C3.5746 14.8386 2.1596 13.4236 2.1596 11.6844V4.58293C2.1596 2.84364 3.5746 1.42864 5.31388 1.42864H17.5425C19.2817 1.42864 20.6967 2.84364 20.6967 4.58293V11.6844Z"
       fill="#271E0B"
@@ -52,6 +87,19 @@ const BuildingIcon = ({ className = "", ...props }) => (
   </svg>
 );
 
+/**
+ * AddressSection Component
+ * 
+ * @param {Object} props
+ * @param {Object|Array} props.data - Office data (object with offices array OR direct array)
+ * @param {string} props.bgColor - Background color (default: 'bg-[#F5F5F5]')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID for anchors (default: 'address-section')
+ * 
+ * @returns {JSX.Element} Rendered address section
+ */
 const AddressSection = ({
   data,
   bgColor = 'bg-[#F5F5F5]',
@@ -60,7 +108,9 @@ const AddressSection = ({
   sectionClassName = '',
   sectionId = 'address-section',
 }) => {
-  // Handle both formats: { offices: [] } OR direct array []
+  // ============================================
+  // NORMALIZE DATA - Handle both formats
+  // ============================================
   let offices = [];
 
   if (Array.isArray(data)) {
@@ -69,14 +119,26 @@ const AddressSection = ({
     offices = data.offices || [];
   }
 
+  // ============================================
+  // STATE - Track active office
+  // ============================================
   const [activeOffice, setActiveOffice] = useState(offices[0] || null);
 
-  // Early return if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(offices) || offices.length === 0) {
     return null;
   }
 
-  // Get map URL with fallback
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Get map embed URL with fallback
+   * Uses Dhaka, Bangladesh as default if no URL provided
+   */
   const getMapUrl = (mapUrl) => {
     if (!mapUrl) {
       return 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d29224.519937285!2d90.3563309!3d23.7509443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b2b3b4b4b5%3A0x6b6b6b6b6b6b6b6b!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sus!4v1234567890';
@@ -84,12 +146,17 @@ const AddressSection = ({
     return mapUrl;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Tabs */}
+      {/* ============================================
+          OFFICE TABS
+          ============================================ */}
       <div className="max-w-200 mx-auto rounded-[18px] bg-white p-4">
         <div className="flex flex-wrap justify-between gap-3">
           {offices.map((office) => (
@@ -97,8 +164,8 @@ const AddressSection = ({
               key={office.id}
               onClick={() => setActiveOffice(office)}
               className={`flex items-center justify-center gap-2 sm:gap-3 rounded-2xl px-4 sm:px-5 py-3 sm:py-5 text-[16px] sm:text-[18px] md:text-[24px] font-semibold transition-all shrink-0 cursor-pointer ${activeOffice?.id === office.id
-                ? 'bg-[#FAFAFA] text-[#1396E8]'
-                : 'bg-white text-[#111827] hover:bg-gray-50'
+                  ? 'bg-[#FAFAFA] text-[#1396E8]'
+                  : 'bg-white text-[#111827] hover:bg-gray-50'
                 }`}
             >
               <OfficeStar active={activeOffice?.id === office.id} />
@@ -108,8 +175,11 @@ const AddressSection = ({
         </div>
       </div>
 
-      {/* Dynamic Map */}
+      {/* ============================================
+          DYNAMIC MAP
+          ============================================ */}
       <div className="relative pt-12">
+        {/* Map Container */}
         <div className="w-full max-w-380 mx-auto rounded-2xl overflow-hidden shadow-lg">
           <iframe
             src={getMapUrl(activeOffice?.mapUrl)}
@@ -120,14 +190,18 @@ const AddressSection = ({
           />
         </div>
 
-        {/* Dynamic Address Card */}
+        {/* ============================================
+            ADDRESS CARD - Overlay on map
+            ============================================ */}
         {hasValue(activeOffice?.address) && (
           <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2 w-[90%] md:w-192.5 z-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 bg-white py-6 px-7 rounded-2xl shadow-xl">
+              {/* Building Icon */}
               <div className='bg-[#F4F8FF] rounded-full p-3.5 shrink-0'>
                 <BuildingIcon />
               </div>
 
+              {/* Address Text */}
               <div className="flex-1 w-full">
                 <h3 className="font-semibold text-[12px] uppercase tracking-wide text-gray-500 mb-1">
                   Address
@@ -137,6 +211,7 @@ const AddressSection = ({
                 </p>
               </div>
 
+              {/* Get Directions Link */}
               <a
                 href={`https://www.google.com/maps?q=${encodeURIComponent(activeOffice.address)}`}
                 target="_blank"

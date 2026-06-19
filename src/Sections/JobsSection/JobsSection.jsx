@@ -1,17 +1,57 @@
 // dus-frontend/src/Sections/JobsSection/JobsSection.jsx
 
-// React
+/**
+ * ============================================
+ * JOBS SECTION - Job Listings with Filter
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays job listings with filtering
+ * - Shows job type, department, location, title, description
+ * - Filter dropdown for job types
+ * - "Apply Now" CTA for each job
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title, description },
+ *   filter: {
+ *     options: [
+ *       { value: "all", label: "Browse By" },
+ *       { value: "full-time", label: "Full Time" },
+ *       ...
+ *     ]
+ *   },
+ *   jobs: [
+ *     {
+ *       id,
+ *       type: "Full Time",
+ *       department: "Program Department",
+ *       location: "Dhaka",
+ *       title: "Program Officer",
+ *       description: "Job description text...",
+ *       link: "/apply"
+ *     }
+ *   ]
+ * }
+ * 
+ * FEATURES:
+ * - Filter dropdown with job types
+ * - Job cards with meta info (type, dept, location)
+ * - "Apply Now" button with arrow icon
+ * - "No jobs found" message when filtered
+ * 
+ * ============================================
+ */
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-
-// React Icons
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { LuBriefcaseBusiness, LuClock4 } from "react-icons/lu";
-
-// Arrow Icon
 import ArrowIcon from '../../Shared/ArrowIcon';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -20,6 +60,19 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * JobsSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - Jobs data with section, filter, jobs
+ * @param {string} props.bgColor - Background color (default: 'bg-[#F5F5F5]')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'jobs')
+ * 
+ * @returns {JSX.Element} Rendered jobs section
+ */
 const JobsSection = ({
   data,
   bgColor = 'bg-[#F5F5F5]',
@@ -28,16 +81,24 @@ const JobsSection = ({
   sectionClassName = '',
   sectionId = 'jobs',
 }) => {
-  // Filter
+  // ============================================
+  // STATE - Filter selection
+  // ============================================
   const [selectedFilter, setSelectedFilter] = useState("");
 
-  // Early return if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) return null;
 
-  // Safe destructuring with defaults
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const { section = {}, filter = {}, jobs = [] } = data;
 
-  // Check if there's any content to display
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasTitle = hasValue(section.title);
   const hasDescription = hasValue(section.description);
   const hasFilterOptions = hasValue(filter.options);
@@ -47,36 +108,40 @@ const JobsSection = ({
 
   if (!hasAnyContent) return null;
 
-  // Handle Filter
+  // ============================================
+  // FILTER LOGIC
+  // ============================================
   const handleFilterChange = (e) => {
     setSelectedFilter(e.target.value);
   };
 
-  // Filtered Jobs
+  // Filter jobs based on selected type
   const filteredJobs = selectedFilter === "" || selectedFilter === "all"
     ? jobs
     : jobs.filter(job => job.type?.toLowerCase().replace(" ", "-") === selectedFilter);
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Header Section */}
+      {/* ============================================
+          HEADER - Title, Description, Filter
+          ============================================ */}
       {(hasTitle || hasDescription || hasFilterOptions) && (
         <div className='flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 sm:pb-10 lg:pb-15 flex-wrap gap-5'>
 
           {/* Left - Title and Description */}
           {(hasTitle || hasDescription) && (
             <div>
-              {/* Title */}
               {hasTitle && (
                 <h1 className='text-[#080C14] font-800 text-[32px] sm:text-[38px] md:text-[44px] lg:text-[50px] mb-3 sm:mb-4 lg:mb-5'>
                   {section.title}
                 </h1>
               )}
-
-              {/* Description */}
               {hasDescription && (
                 <p className='text-[#515151] font-400 text-[16px] sm:text-[18px] lg:text-[20px]'>
                   {section.description}
@@ -102,6 +167,7 @@ const JobsSection = ({
                 ))}
               </select>
 
+              {/* Custom dropdown arrow */}
               <div className="pointer-events-none absolute right-3 sm:right-5 top-1/2 -translate-y-1/2">
                 <svg
                   width="16"
@@ -127,12 +193,15 @@ const JobsSection = ({
         </div>
       )}
 
-      {/* Jobs List */}
+      {/* ============================================
+          JOBS LIST
+          ============================================ */}
       {hasJobs && (
         <div className='space-y-4 sm:space-y-5 lg:space-y-6'>
           {filteredJobs.map((job) => (
             <div key={job.id} className='bg-white p-5 sm:p-6 md:p-8 lg:p-10 rounded-2xl hover:shadow-lg transition-all duration-300'>
               <div className='flex flex-col md:flex-row items-start justify-between gap-5'>
+                {/* Job Details */}
                 <div className='flex-1 w-full'>
 
                   {/* Job Meta Info (Type, Department, Location) */}

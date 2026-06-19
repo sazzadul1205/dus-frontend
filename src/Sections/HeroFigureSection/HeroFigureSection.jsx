@@ -1,16 +1,42 @@
 // dus-frontend/src/Sections/HeroFigureSection/HeroFigureSection.jsx
 
-// React
-import { Link } from 'react-router-dom';
+/**
+ * ============================================
+ * HERO FIGURE SECTION - Content with Image
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays content with an image in a two-column layout
+ * - Supports text-left or text-right layouts
+ * - Can have a background image with overlay
+ * - Rich text content with HTML sanitization
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title },
+ *   content: { html },
+ *   image: { src, alt, className },
+ *   btn: { text, link }
+ * }
+ * 
+ * FEATURES:
+ * - Two-column responsive layout
+ * - Text-left or text-right image placement
+ * - Optional background image with overlay
+ * - HTML content with sanitization
+ * - CTA button with arrow icon
+ * 
+ * ============================================
+ */
 
-// Components
+import { Link } from 'react-router-dom';
 import ArrowIcon from '../../Shared/ArrowIcon';
 import ImageWithFallback from '../../Shared/ImageWithFallback';
-
-// Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -19,6 +45,23 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * HeroFigureSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - Section data
+ * @param {string} props.sectionId - Section ID (default: 'hero-figure')
+ * @param {string} props.layout - Image position: 'text-left' or 'text-right' (default: 'text-left')
+ * @param {string} props.bgColor - Background color (default: 'bg-white')
+ * @param {string} props.bgImage - Background image URL (optional)
+ * @param {string} props.bgOverlay - Overlay class (e.g., 'bg-black/50')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered hero figure section
+ */
 const HeroFigureSection = ({
   data,
   sectionId = 'hero-figure',
@@ -31,11 +74,17 @@ const HeroFigureSection = ({
   sectionClassName = '',
   storageUrl = '',
 }) => {
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) {
     console.warn('HeroFigureSection: No data provided');
     return null;
   }
 
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const {
     section = {},
     content = {},
@@ -43,6 +92,9 @@ const HeroFigureSection = ({
     btn = {}
   } = data;
 
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasTitle = hasValue(section?.title);
   const hasContent = hasValue(content?.html);
   const hasButton = hasValue(btn?.text) && hasValue(btn?.link);
@@ -52,6 +104,13 @@ const HeroFigureSection = ({
 
   if (!hasAnyContent) return null;
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -59,6 +118,9 @@ const HeroFigureSection = ({
     return imagePath;
   };
 
+  /**
+   * Build background image URL
+   */
   const getBgImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -66,8 +128,19 @@ const HeroFigureSection = ({
     return imagePath;
   };
 
+  // Determine image placement based on layout
   const isImageLeft = layout === 'text-right';
 
+  // ============================================
+  // RENDER HELPERS
+  // ============================================
+
+  /**
+   * Render text content section
+   * - Title
+   * - HTML content with fade gradient
+   * - CTA Button
+   */
   const renderTextContent = () => (
     <div className='w-full lg:w-1/2 flex flex-col justify-between relative z-10'>
       {hasTitle && (
@@ -89,6 +162,7 @@ const HeroFigureSection = ({
             }}
             dangerouslySetInnerHTML={createSanitizedHTML(content.html)}
           />
+          {/* Fade gradient at bottom of content */}
           <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
         </div>
       )}
@@ -107,6 +181,9 @@ const HeroFigureSection = ({
     </div>
   );
 
+  /**
+   * Render image section
+   */
   const renderImage = () => (
     hasImage && (
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0 relative z-10'>
@@ -120,6 +197,9 @@ const HeroFigureSection = ({
     )
   );
 
+  // ============================================
+  // BUILD BACKGROUND STYLES
+  // ============================================
   const bgImageUrl = getBgImageUrl(bgImage);
   const backgroundStyle = hasValue(bgImageUrl) ? {
     backgroundImage: `url(${bgImageUrl})`,
@@ -128,23 +208,30 @@ const HeroFigureSection = ({
     backgroundRepeat: 'no-repeat'
   } : {};
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`relative ${bgColor} ${paddingY} ${paddingX} ${sectionClassName}`}
       style={backgroundStyle}
     >
+      {/* Background Overlay */}
       {hasValue(bgImage) && hasValue(bgOverlay) && (
         <div className={`absolute inset-0 ${bgOverlay}`}></div>
       )}
 
+      {/* Content Layout - Image Left or Image Right */}
       <div className={`flex flex-col lg:flex-row justify-between items-stretch gap-8 lg:gap-15 relative z-10`}>
         {isImageLeft ? (
+          // Image on Left, Text on Right
           <>
             {renderImage()}
             {renderTextContent()}
           </>
         ) : (
+          // Text on Left, Image on Right (default)
           <>
             {renderTextContent()}
             {renderImage()}

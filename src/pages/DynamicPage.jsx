@@ -318,6 +318,27 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
   });
 
   // ============================================
+  // 7.5 FETCH JOBS DATA
+  // ============================================
+  /**
+   * Fetches jobs data for the jobs section
+   * 
+   * This data contains:
+   * - Job listings with type, department, location
+   * - Job titles and descriptions
+   * - Apply links
+   */
+  const {
+    data: jobsData,
+    error: jobsError,
+    isLoading: jobsLoading,
+  } = useQuery({
+    queryKey: ['jobsData'],
+    queryFn: () => axiosPublic.get('jobs.json').then(res => res.data),
+    enabled: !!configsData,
+  });
+
+  // ============================================
   // 8. FETCH ABOUT CONTENT DATA
   // ============================================
   /**
@@ -408,6 +429,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
    */
   const pageData = useMemo(() => {
     const data = {};
+
     pageConfigs.forEach(section => {
       // Handle shared data (topbar, navbar, footer, etc.)
       if (section.data_table === 'shared_data' && section.data_key) {
@@ -415,38 +437,81 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
           .replace(/Data$/, '')
           .replace(/([a-z])([A-Z])/g, '$1-$2')
           .toLowerCase();
+
         const value = parsedShared[type] || null;
         data[section.data_key] = value;
         data[type] = value;
       }
+
       // Handle custom section data
       else if (section.data_table === 'custom_section_data' && section.section_key) {
         const value = parsedCustom[section.section_key] || null;
         if (section.data_key) data[section.data_key] = value;
         data[section.section_key] = value;
       }
+
       // Handle programs data
       else if (section.data_table === 'programs' && section.data_key) {
         const programsPayload = programsData?.data || programsData?.programs || [];
+
         data[section.data_key] = {
           section: programsData?.section || null,
           programs: programsPayload,
         };
+
         data['programsData'] = programsPayload;
         data['programsSection'] = programsData?.section || null;
       }
+
       // Handle blogs data
       else if (section.data_table === 'blogs' && section.data_key) {
         const blogList = blogsData?.data || [];
+
         data[section.data_key] = blogList;
         data['blogsData'] = blogList;
       }
+
       // Handle about content data
       else if (section.data_table === 'about_content' && section.data_key) {
         const aboutList = aboutContentData?.data || [];
+
         data[section.data_key] = aboutList;
         data['aboutContentData'] = aboutList;
       }
+
+      // Handle jobs data
+      else if (section.data_table === 'jobs' && section.data_key) {
+        const jobList = jobsData?.data || [];
+
+        data[section.data_key] = {
+          section: section.section_key === 'jobs'
+            ? {
+              title: "Join our big family",
+              description:
+                "Join us on this journey of kindness, and let's make a difference, one act of charity at a time.",
+            }
+            : null,
+
+          filter: {
+            options: [
+              { value: "", label: "Browse By" },
+              { value: "all", label: "All Jobs" },
+              { value: "full-time", label: "Full Time" },
+              { value: "part-time", label: "Part Time" },
+              { value: "contract", label: "Contract" },
+              { value: "remote", label: "Remote" },
+              { value: "internship", label: "Internship" },
+            ],
+          },
+
+          jobs: jobList,
+        };
+
+        // Keep the raw list available separately without overwriting the
+        // section payload that JobsSection expects.
+        data['jobsList'] = jobList;
+      }
+
       // Fallback: pass through props
       else if (section.data_table && section.data_key) {
         data[section.data_key] = props[section.data_key] || null;
@@ -454,16 +519,18 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     });
 
     // Always pass programsData and blogsData for details pages
-    // These are needed even if not explicitly configured
     if (programsData?.data) {
       data.programsData = programsData.data;
     }
+
     if (programsData?.section) {
       data.programsSection = programsData.section;
     }
+
     if (blogsData?.data) {
       data.blogsData = blogsData.data;
     }
+
     if (aboutContentData?.data) {
       const aboutList = aboutContentData.data;
       data.aboutContentData = aboutList;
@@ -471,7 +538,16 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     }
 
     return data;
-  }, [pageConfigs, parsedShared, parsedCustom, props, programsData, blogsData, aboutContentData]);
+  }, [
+    pageConfigs,
+    parsedShared,
+    parsedCustom,
+    props,
+    programsData,
+    blogsData,
+    aboutContentData,
+    jobsData
+  ]);
 
   // ============================================
   // 10. LOADING & ERROR STATES
@@ -482,14 +558,14 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
    * All queries must complete before rendering
    */
   const isLoading = configsLoading || sharedLoading || customLoading ||
-    programsLoading || blogsLoading || aboutContentLoading;
+    programsLoading || blogsLoading || aboutContentLoading || jobsLoading;
 
   /**
    * Check if any query encountered an error
    * Show error state if any data fetch fails
    */
   const hasError = configsError || sharedError || customError ||
-    programsError || blogsError || aboutContentError;
+    programsError || blogsError || aboutContentError || jobsError;
 
   // ============================================
   // 11. RENDER - LOADING STATE
@@ -604,6 +680,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
           programsData: pageData.programsData || [],
           programsSection: pageData.programsSection || null,
           blogsData: pageData.blogsData || [],
+          jobsData: pageData.jobsList || [],
           sectionConfigs: pageConfigs,
           pageData: pageData,
           storageUrl: STORAGE_URL
@@ -678,6 +755,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
             programsData: pageData.programsData || [],
             programsSection: pageData.programsSection || null,
             blogsData: pageData.blogsData || [],
+            jobsData: pageData.jobsList || [],
           }}
         />
       ))}

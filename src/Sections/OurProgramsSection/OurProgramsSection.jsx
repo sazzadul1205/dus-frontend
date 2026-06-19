@@ -1,17 +1,44 @@
 // dus-frontend/src/Sections/OurProgramsSection/OurProgramsSection.jsx
 
-// React
+/**
+ * ============================================
+ * OUR PROGRAMS SECTION - Sticky Card Program Showcase
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays programs in a visually stunning sticky card layout
+ * - Each program is a card that sticks as you scroll
+ * - Cards stack on top of each other with parallax effect
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title, description, button: { text, link } },
+ *   programs: [
+ *     { id, title, description, image, slug, bg_color, is_featured }
+ *   ]
+ * }
+ * - OR -
+ * [ { id, title, description, image, slug, bg_color, is_featured }, ... ]
+ * 
+ * FEATURES:
+ * - Sticky cards with parallax scroll effect
+ * - Intersection Observer for fade-in animations
+ * - HTML content truncation (9 lines max)
+ * - Custom background color per program
+ * - "Read More" links with arrow icon
+ * 
+ * ============================================
+ */
+
 import { Link } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
-
-// Arrow Icon
 import ArrowIcon from "../../Shared/ArrowIcon";
 import ImageWithFallback from '../../Shared/ImageWithFallback';
-
-// Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -20,6 +47,9 @@ const hasValue = (value) => {
   return true;
 };
 
+// ============================================
+// DEFAULT SECTION - Used on the homepage
+// ============================================
 const DEFAULT_SECTION = {
   title: 'Our Programs',
   description: 'Explore the key programs and initiatives we run to support communities, build resilience, and create lasting impact.',
@@ -29,6 +59,23 @@ const DEFAULT_SECTION = {
   },
 };
 
+/**
+ * OurProgramsSection Component
+ * 
+ * @param {Object} props
+ * @param {Object|Array} props.data - Program data (object with section/programs OR array)
+ * @param {string} props.pageSlug - Current page slug (home pages use default header)
+ * @param {string} props.bgColor - Background color (default: 'bg-white')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'our-programs')
+ * @param {number|null} props.limit - Max number of programs to show
+ * @param {boolean} props.showFeatured - Show only featured programs
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered our programs section
+ */
 const OurProgramsSection = ({
   data,
   pageSlug = '',
@@ -41,9 +88,15 @@ const OurProgramsSection = ({
   showFeatured = false,
   storageUrl = '',
 }) => {
+  // ============================================
+  // STATE - Track which cards are visible
+  // ============================================
   const [visibleCards, setVisibleCards] = useState([]);
   const cardsRef = useRef([]);
 
+  // ============================================
+  // INTERSECTION OBSERVER - Fade-in animation
+  // ============================================
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -69,8 +122,14 @@ const OurProgramsSection = ({
     return () => observer.disconnect();
   }, []);
 
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) return null;
 
+  // ============================================
+  // NORMALIZE DATA - Handle both formats
+  // ============================================
   let section = {};
   let programList = [];
 
@@ -88,6 +147,9 @@ const OurProgramsSection = ({
     programList = data;
   }
 
+  // ============================================
+  // PROCESS HEADER - Homepage uses default header
+  // ============================================
   const useDefaultHeader = pageSlug === 'home';
 
   const header = useDefaultHeader
@@ -106,6 +168,9 @@ const OurProgramsSection = ({
       },
     };
 
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasTitle = hasValue(header.title);
   const hasDescription = hasValue(header.description);
   const hasButton = hasValue(header.button?.text);
@@ -115,6 +180,9 @@ const OurProgramsSection = ({
 
   if (!showHeader && !hasPrograms) return null;
 
+  // ============================================
+  // FILTER PROGRAMS
+  // ============================================
   let displayPrograms = [...programList];
 
   if (showFeatured) {
@@ -129,6 +197,13 @@ const OurProgramsSection = ({
     displayPrograms = displayPrograms.slice(0, limit);
   }
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Strip HTML tags to get plain text
+   */
   const stripHtmlTags = (html) => {
     if (!html) return '';
     const temp = document.createElement('div');
@@ -136,6 +211,10 @@ const OurProgramsSection = ({
     return temp.textContent || temp.innerText || '';
   };
 
+  /**
+   * Truncate HTML content to a max number of lines
+   * Approximates lines by word count (20 words per line)
+   */
   const truncateHtml = (html, maxLines = 9) => {
     if (!html) return '';
 
@@ -154,6 +233,9 @@ const OurProgramsSection = ({
     return `<p class="font-400 text-[16px] sm:text-[18px] lg:text-[20px] text-[#524B48] leading-relaxed">${truncatedText}</p>`;
   };
 
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -161,15 +243,23 @@ const OurProgramsSection = ({
     return imagePath;
   };
 
+  // Calculate container height for sticky effect
   const containerHeight = displayPrograms.length > 0 ? displayPrograms.length * 100 : 0;
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
+      {/* ============================================
+          HEADER
+          ============================================ */}
       {showHeader && (
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 sm:pb-10 lg:pb-15 gap-5">
+          {/* Title and Description */}
           {(hasTitle || hasDescription) && (
             <div className="max-w-250">
               {hasTitle && (
@@ -184,6 +274,7 @@ const OurProgramsSection = ({
               )}
             </div>
           )}
+          {/* "View All" Button */}
           {hasButton && (
             <Link
               to={header.button?.link || '/projects-programs'}
@@ -196,6 +287,9 @@ const OurProgramsSection = ({
         </div>
       )}
 
+      {/* ============================================
+          STICKY CARDS - Parallax scroll effect
+          ============================================ */}
       {hasPrograms && displayPrograms.length > 0 && (
         <>
           <div
@@ -203,6 +297,7 @@ const OurProgramsSection = ({
             style={{ height: `${containerHeight}vh` }}
           >
             {displayPrograms.map((program, index) => {
+              // Skip invalid programs
               if (!hasValue(program) && !program.title && !program.description) {
                 return null;
               }
@@ -225,10 +320,12 @@ const OurProgramsSection = ({
                   `}
                   style={{ zIndex: index + 1 }}
                 >
+                  {/* Program Card */}
                   <div
                     className="flex flex-col lg:flex-row justify-between items-center gap-8 lg:gap-25 p-5 sm:p-6 md:p-8 lg:p-25 rounded-3xl min-h-162.5 lg:h-187.5 shadow-lg"
                     style={{ backgroundColor: program.bg_color || '#ffffff' }}
                   >
+                    {/* Left - Program Content */}
                     <div className="w-full lg:w-1/2 flex flex-col justify-center">
                       {hasValue(program.title) && (
                         <h3 className="bricolage-grotesque font-600 text-[24px] sm:text-[28px] md:text-[36px] lg:text-[46px] text-[#080C14] leading-tight mb-5">
@@ -254,6 +351,7 @@ const OurProgramsSection = ({
                       )}
                     </div>
 
+                    {/* Right - Program Image */}
                     {hasValue(program.image) && (
                       <div className="w-full lg:w-1/2">
                         <ImageWithFallback
@@ -270,6 +368,7 @@ const OurProgramsSection = ({
             })}
           </div>
 
+          {/* Spacer for scroll */}
           <div className="h-50" />
         </>
       )}

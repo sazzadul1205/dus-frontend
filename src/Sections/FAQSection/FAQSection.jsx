@@ -1,9 +1,38 @@
 // dus-frontend/src/Sections/FAQSection/FAQSection.jsx
 
-// React
+/**
+ * ============================================
+ * FAQ SECTION - Accordion FAQ Component
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Displays frequently asked questions in an accordion format
+ * - Users can click to expand/collapse answers
+ * - One answer open at a time (accordion behavior)
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   section: { title, subtitle },
+ *   faqs: [
+ *     { id, question, answer }
+ *   ]
+ * }
+ * 
+ * FEATURES:
+ * - Accordion with smooth expand/collapse animation
+ * - + / - toggle icons
+ * - Color change on open (brand color)
+ * - Responsive padding and sizing
+ * - First FAQ open by default
+ * 
+ * ============================================
+ */
+
 import { useState } from 'react';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -12,6 +41,20 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * FAQSection Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.data - FAQ data with section and faqs
+ * @param {string} props.bgColor - Background color (default: 'bg-[#F5F5F5]')
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID (default: 'faq')
+ * @param {number} props.defaultOpenId - ID of FAQ to open by default (default: 1)
+ * 
+ * @returns {JSX.Element} Rendered FAQ section
+ */
 const FAQSection = ({
   data,
   bgColor = 'bg-[#F5F5F5]',
@@ -19,19 +62,28 @@ const FAQSection = ({
   paddingX = 'px-4 sm:px-6 md:px-10 lg:px-20 xl:px-50',
   sectionClassName = '',
   sectionId = 'faq',
-  defaultOpenId = 1,  // First FAQ open by default
+  defaultOpenId = 1,
 }) => {
+  // ============================================
+  // STATE - Track which FAQ is open
+  // ============================================
   const [openId, setOpenId] = useState(defaultOpenId);
 
-  // Early return if no data
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(data)) {
     return null;
   }
 
-  // Safe destructuring with defaults
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const { section = {}, faqs = [] } = data;
 
-  // Check if there's any content to display
+  // ============================================
+  // CHECK FOR CONTENT
+  // ============================================
   const hasTitle = hasValue(section?.title);
   const hasSubtitle = hasValue(section?.subtitle);
   const hasFaqs = hasValue(faqs);
@@ -42,24 +94,38 @@ const FAQSection = ({
     return null;
   }
 
+  // ============================================
+  // HANDLERS
+  // ============================================
+  /**
+   * Toggle FAQ open/closed
+   * If clicking the same FAQ, close it
+   * If clicking a different FAQ, open it and close the others
+   */
   const toggleFAQ = (id) => {
     setOpenId(openId === id ? null : id);
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <section
       id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
+      {/* ============================================
+          HEADER - Title and Subtitle
+          ============================================ */}
       <div className='max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto text-center'>
-        {/* Section Title */}
+        {/* Title */}
         {hasTitle && (
           <h1 className='font-700 text-[28px] sm:text-[32px] md:text-[36px] lg:text-[40px] leading-tight mb-3 sm:mb-4 bricolage-grotesque'>
             {section.title}
           </h1>
         )}
 
-        {/* Section Subtitle */}
+        {/* Subtitle */}
         {hasSubtitle && (
           <p className='text-[#333333] text-[14px] sm:text-[16px] md:text-[18px] lg:text-[20px] leading-relaxed bricolage-grotesque px-2 sm:px-4'>
             {section.subtitle}
@@ -67,7 +133,9 @@ const FAQSection = ({
         )}
       </div>
 
-      {/* FAQ List - Only show if FAQs exist */}
+      {/* ============================================
+          FAQ LIST - Accordion
+          ============================================ */}
       {hasFaqs && (
         <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-15 space-y-2 sm:space-y-2.5 max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto'>
           {faqs.map((faq) => {
@@ -91,6 +159,7 @@ const FAQSection = ({
                         }`}>
                         {faq.question}
                       </h3>
+                      {/* Toggle Icon - + when closed, - when open */}
                       <span className={`font-600 text-[20px] sm:text-[22px] md:text-[24px] lg:text-[24px] leading-tight shrink-0 transition-all duration-300 ease-in-out ${isOpen ? 'rotate-0 text-[#009BE2]' : 'rotate-0 text-[#080C14]'
                         }`}>
                         {isOpen ? '−' : '+'}
@@ -99,7 +168,7 @@ const FAQSection = ({
                   </div>
                 )}
 
-                {/* FAQ Answer - Smooth animation */}
+                {/* FAQ Answer - With smooth expand/collapse animation */}
                 {hasAnswer && (
                   <div
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
