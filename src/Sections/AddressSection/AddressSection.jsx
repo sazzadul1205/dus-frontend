@@ -64,10 +64,8 @@ const AddressSection = ({
   let offices = [];
 
   if (Array.isArray(data)) {
-    // Direct array format
     offices = data;
   } else if (data && typeof data === 'object') {
-    // Object format with offices property
     offices = data.offices || [];
   }
 
@@ -155,4 +153,4 @@ const AddressSection = ({
   );
 };
 
-export default AddressSection
+export default AddressSection;

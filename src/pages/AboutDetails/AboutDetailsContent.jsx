@@ -8,9 +8,9 @@ import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
 // Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
-// Special ContentSection component
-const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
+const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClassName, sectionId, storageUrl = '' }) => {
   const data = subPageData || {};
   const {
     title,
@@ -21,13 +21,18 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
     btn_link: btnLink
   } = data;
 
-  // Use full_content first, fallback to content
   const bodyContent = fullContent || content || '';
 
   if (!title && !bodyContent) return null;
 
-  // Build btn object if btn_text and btn_link exist
   const btn = (btnText && btnLink) ? { text: btnText, link: btnLink } : null;
+
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
 
   return (
     <section id={sectionId} className={`${bgColor || ''} ${paddingY || ''} ${paddingX || ''} ${sectionClassName || ''}`}>
@@ -38,9 +43,10 @@ const ContentSection = ({ subPageData, bgColor, paddingY, paddingX, sectionClass
       )}
       {image && (
         <div className="mb-6 sm:mb-8 md:mb-10 lg:mb-12.5">
-          <img
-            src={image}
+          <ImageWithFallback
+            src={getImageSrc(image)}
             alt={title || 'About image'}
+            fallbackType="about"
             className="w-full h-auto max-h-64 sm:max-h-80 md:max-h-96 lg:max-h-125 object-cover rounded-2xl"
           />
         </div>
@@ -113,7 +119,6 @@ export default function AboutDetailsContent({
 
   return (
     <>
-      {/* Banner */}
       {bannerSection && (
         <DynamicSectionRenderer
           key={bannerSection.id}
@@ -123,7 +128,6 @@ export default function AboutDetailsContent({
         />
       )}
 
-      {/* Fixed Sections */}
       {fixedSections.map((section) => {
         if (section.component === 'ContentSection') {
           let customProps = {};
@@ -141,6 +145,7 @@ export default function AboutDetailsContent({
             <ContentSection
               key={section.id}
               subPageData={contentData}
+              storageUrl={storageUrl}
               {...customProps}
             />
           );
@@ -148,7 +153,6 @@ export default function AboutDetailsContent({
         return null;
       })}
 
-      {/* Other Dynamic Sections */}
       {otherDynamicSections.map((section) => (
         <DynamicSectionRenderer
           key={section.id}

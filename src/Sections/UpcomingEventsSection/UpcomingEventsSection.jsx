@@ -9,6 +9,9 @@ import ArrowIcon from '../../Shared/ArrowIcon';
 // Icons
 import { CiLocationOn } from "react-icons/ci";
 
+// Image Component with Fallback
+import ImageWithFallback from '../../Shared/ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -25,6 +28,7 @@ const UpcomingEventsSection = ({
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
   sectionId = 'upcoming-events',
+  storageUrl = '',
 }) => {
   // Early return if no data
   if (!hasValue(data)) return null;
@@ -43,10 +47,11 @@ const UpcomingEventsSection = ({
 
   if (!hasAnyContent) return null;
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/600x400/009BE2/FFFFFF?text=Upcoming+Events';
+  // Get image URL helper with storage URL support
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
@@ -88,13 +93,16 @@ const UpcomingEventsSection = ({
               )}
             </div>
 
-            {/* Image */}
+            {/* Image - Using ImageWithFallback */}
             {hasImage && (
-              <img
-                src={getImageUrl(image.src)}
-                alt={image.alt || "Upcoming events"}
-                className={`${image.className || ''} mt-8 sm:mt-10 lg:mt-15 rounded-2xl w-full h-auto lg:h-139.25 object-cover`}
-              />
+              <div className="mt-8 sm:mt-10 lg:mt-15">
+                <ImageWithFallback
+                  src={getImageSrc(image.src)}
+                  alt={image.alt || "Upcoming events"}
+                  fallbackType="event"
+                  className={`${image.className || ''} rounded-2xl w-full h-auto lg:h-139.25 object-cover`}
+                />
+              </div>
             )}
           </div>
         )}

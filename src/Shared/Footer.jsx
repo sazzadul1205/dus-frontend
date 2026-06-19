@@ -7,6 +7,9 @@ import { useState } from 'react';
 // Icons
 import { FaFacebook, FaInstagram, FaLinkedin, FaXTwitter } from 'react-icons/fa6';
 
+// Image Component with Fallback
+import ImageWithFallback from './ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -24,7 +27,7 @@ const iconMap = {
   FaXTwitter: FaXTwitter
 };
 
-const Footer = ({ footerData }) => {
+const Footer = ({ footerData, storageUrl = '' }) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
@@ -33,12 +36,8 @@ const Footer = ({ footerData }) => {
     programs: false
   });
 
-  // Don't render if no data (EARLY RETURN AFTER ALL HOOKS)
-  if (!hasValue(footerData)) {
-    return null;
-  }
+  if (!hasValue(footerData)) return null;
 
-  // Safe destructuring with defaults
   const {
     logo = {},
     description = '',
@@ -65,12 +64,17 @@ const Footer = ({ footerData }) => {
   const hasNewsletter = hasValue(newsletter.title);
   const hasBottomFooter = hasValue(bottomFooter.copyright) || hasValue(bottomFooter.links);
 
-  // If no content at all, don't render
   if (!hasLogo && !hasDescription && !hasSocialLinks && !hasAddress && !hasContact && !hasEmailInfo && !hasQuickLinks && !hasPrograms && !hasNewsletter) {
     return null;
   }
 
-  // Split programs into two columns (only if programs exist)
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
+
   const itemsPerColumn = hasPrograms ? Math.ceil(programs.length / 2) : 0;
   const firstProgramColumn = hasPrograms ? programs.slice(0, itemsPerColumn) : [];
   const secondProgramColumn = hasPrograms ? programs.slice(itemsPerColumn) : [];
@@ -82,7 +86,6 @@ const Footer = ({ footerData }) => {
     }));
   };
 
-  // Handle form submission
   const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
@@ -94,7 +97,6 @@ const Footer = ({ footerData }) => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call - replace with actual fetch
       setTimeout(() => {
         setSubmitMessage('Successfully subscribed!');
         setEmail('');
@@ -114,28 +116,24 @@ const Footer = ({ footerData }) => {
       <footer className='bg-[#080C14] rounded-t-2xl lg:rounded-t-4xl pb-25' role="contentinfo">
         <div className='mx-auto flex flex-col lg:flex-row px-5 lg:px-50 pt-10 lg:pt-37.5 gap-8 lg:gap-50'>
 
-          {/* Left Section */}
           <div className='w-full lg:w-1/3'>
-            {/* Footer Logo */}
             {hasLogo && (
               <div className="flex justify-center lg:justify-start">
-                <img
-                  src={logo.src}
+                <ImageWithFallback
+                  src={getImageSrc(logo.src)}
                   alt={logo.alt || 'Footer Logo'}
+                  fallbackType="logo"
                   className={logo.className || 'h-auto w-auto'}
-                  loading="lazy"
                 />
               </div>
             )}
 
-            {/* Footer Description */}
             {hasDescription && (
               <p className='pt-5 text-center lg:text-left text-xs lg:text-sm leading-relaxed text-gray-300 px-4 lg:px-0'>
                 {description}
               </p>
             )}
 
-            {/* Social Media Icons */}
             {hasSocialLinks && (
               <div className='pt-5 flex justify-center lg:justify-start gap-3 lg:gap-5' aria-label="Social media links">
                 {socialLinks.map((social, index) => {
@@ -161,10 +159,8 @@ const Footer = ({ footerData }) => {
               </div>
             )}
 
-            {/* Address & Contact Info */}
             {(hasAddress || hasContact || hasEmailInfo) && (
               <div className='max-w-full lg:max-w-125 pt-5 space-y-4 text-center lg:text-left'>
-                {/* Address */}
                 {hasAddress && (
                   <div>
                     <h2 className='text-gray-400 font-semibold mb-2 text-xs lg:text-sm uppercase tracking-wide'>
@@ -176,7 +172,6 @@ const Footer = ({ footerData }) => {
                   </div>
                 )}
 
-                {/* Contact Numbers */}
                 {hasContact && hasValue(contact.numbers) && (
                   <div>
                     <h2 className='text-gray-400 font-semibold mb-2 text-xs lg:text-sm uppercase tracking-wide'>
@@ -194,7 +189,6 @@ const Footer = ({ footerData }) => {
                   </div>
                 )}
 
-                {/* Email Addresses */}
                 {hasEmailInfo && hasValue(emailInfo.addresses) && (
                   <div>
                     <h2 className='text-gray-400 font-semibold mb-2 text-xs lg:text-sm uppercase tracking-wide'>
@@ -215,13 +209,10 @@ const Footer = ({ footerData }) => {
             )}
           </div>
 
-          {/* Right Section */}
           {(hasQuickLinks || hasPrograms || hasNewsletter) && (
             <div className='w-full lg:w-2/3'>
-              {/* Desktop Grid - Hidden on mobile */}
               {(hasQuickLinks || hasPrograms) && (
                 <div className='hidden md:grid md:grid-cols-3 gap-8'>
-                  {/* Quick Links */}
                   {hasQuickLinks && (
                     <div>
                       <h2 className='text-white text-xl lg:text-[22px] font-bold mb-5'>Quick Links</h2>
@@ -229,11 +220,11 @@ const Footer = ({ footerData }) => {
                         {quickLinks.map((link, index) => (
                           <li key={index} className='flex items-center group'>
                             {hasValue(quickLinkLinkIcon) && (
-                              <img
-                                src={quickLinkLinkIcon}
+                              <ImageWithFallback
+                                src={getImageSrc(quickLinkLinkIcon)}
                                 alt=""
+                                fallbackType="default"
                                 className='mr-3 w-2.5 h-auto opacity-70 group-hover:opacity-100 transition-opacity'
-                                aria-hidden="true"
                               />
                             )}
                             <Link
@@ -248,7 +239,6 @@ const Footer = ({ footerData }) => {
                     </div>
                   )}
 
-                  {/* Our Programs - Column 1 */}
                   {hasPrograms && (
                     <div>
                       <h2 className='text-white text-xl lg:text-[22px] font-bold mb-5'>Our Programs</h2>
@@ -256,11 +246,11 @@ const Footer = ({ footerData }) => {
                         {firstProgramColumn.map((program, index) => (
                           <li key={index} className='flex items-center group'>
                             {hasValue(OurProgramLinkIcon) && (
-                              <img
-                                src={OurProgramLinkIcon}
+                              <ImageWithFallback
+                                src={getImageSrc(OurProgramLinkIcon)}
                                 alt=""
+                                fallbackType="default"
                                 className='mr-3 w-2.5 h-auto opacity-70 group-hover:opacity-100 transition-opacity'
-                                aria-hidden="true"
                               />
                             )}
                             <Link
@@ -275,7 +265,6 @@ const Footer = ({ footerData }) => {
                     </div>
                   )}
 
-                  {/* Our Programs - Column 2 */}
                   {hasPrograms && secondProgramColumn.length > 0 && (
                     <div>
                       <h2 className='text-xl lg:text-[22px] font-bold mb-5 opacity-0 pointer-events-none invisible'>
@@ -285,11 +274,11 @@ const Footer = ({ footerData }) => {
                         {secondProgramColumn.map((program, index) => (
                           <li key={index} className='flex items-center group'>
                             {hasValue(OurProgramLinkIcon) && (
-                              <img
-                                src={OurProgramLinkIcon}
+                              <ImageWithFallback
+                                src={getImageSrc(OurProgramLinkIcon)}
                                 alt=""
+                                fallbackType="default"
                                 className='mr-3 w-2.5 h-auto opacity-70 group-hover:opacity-100 transition-opacity'
-                                aria-hidden="true"
                               />
                             )}
                             <Link
@@ -306,9 +295,7 @@ const Footer = ({ footerData }) => {
                 </div>
               )}
 
-              {/* Mobile Accordion Menu - Visible only on mobile */}
               <div className='md:hidden space-y-4'>
-                {/* Quick Links Accordion */}
                 {hasQuickLinks && (
                   <div className="border-b border-gray-700">
                     <button
@@ -330,11 +317,11 @@ const Footer = ({ footerData }) => {
                         {quickLinks.map((link, index) => (
                           <li key={index} className='flex items-center group'>
                             {hasValue(quickLinkLinkIcon) && (
-                              <img
-                                src={quickLinkLinkIcon}
+                              <ImageWithFallback
+                                src={getImageSrc(quickLinkLinkIcon)}
                                 alt=""
+                                fallbackType="default"
                                 className='mr-3 w-2.5 h-auto opacity-70 group-hover:opacity-100 transition-opacity'
-                                aria-hidden="true"
                               />
                             )}
                             <Link
@@ -350,7 +337,6 @@ const Footer = ({ footerData }) => {
                   </div>
                 )}
 
-                {/* Programs Accordion */}
                 {hasPrograms && (
                   <div className="border-b border-gray-700">
                     <button
@@ -372,11 +358,11 @@ const Footer = ({ footerData }) => {
                         {programs.map((program, index) => (
                           <li key={index} className='flex items-center group'>
                             {hasValue(OurProgramLinkIcon) && (
-                              <img
-                                src={OurProgramLinkIcon}
+                              <ImageWithFallback
+                                src={getImageSrc(OurProgramLinkIcon)}
                                 alt=""
+                                fallbackType="default"
                                 className='mr-3 w-2.5 h-auto opacity-70 group-hover:opacity-100 transition-opacity'
-                                aria-hidden="true"
                               />
                             )}
                             <Link
@@ -393,7 +379,6 @@ const Footer = ({ footerData }) => {
                 )}
               </div>
 
-              {/* Newsletter Section */}
               {hasNewsletter && (
                 <div className='pt-10 mt-5 border-t border-gray-700'>
                   <h2 className='text-xl lg:text-[28px] font-bold text-white text-center lg:text-left'>
@@ -437,7 +422,6 @@ const Footer = ({ footerData }) => {
         </div>
       </footer>
 
-      {/* Bottom Footer */}
       {hasBottomFooter && (
         <footer className='flex flex-col sm:flex-row justify-between items-center gap-4 bg-[#080C14] border-t border-[#090C40] px-5 lg:px-50 py-6'>
           {hasValue(bottomFooter.copyright) && (

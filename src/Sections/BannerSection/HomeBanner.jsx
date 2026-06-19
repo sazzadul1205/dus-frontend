@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 // Arrow Icon
 import ArrowIcon from '../../Shared/ArrowIcon';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
 // Utility function for consistent value checking
 const hasValue = (value) => {
@@ -21,13 +22,10 @@ const HomeBanner = ({
   height = 'h-125 md:h-280',
   sectionClassName = '',
   sectionId = 'banner',
+  storageUrl = '',
 }) => {
-  // If data doesn't exist, don't render anything
-  if (!hasValue(data)) {
-    return null;
-  }
+  if (!hasValue(data)) return null;
 
-  // Destructure with fallbacks to prevent errors
   const {
     background = {},
     overlay = {},
@@ -35,16 +33,15 @@ const HomeBanner = ({
     buttons = []
   } = data;
 
-  // Check if there's any content to display
   const hasAnyContent = hasValue(content.tagline?.text) ||
     hasValue(content.title?.text) ||
     hasValue(content.description?.text) ||
     hasValue(buttons);
 
-  // Get background image URL with fallback
-  const getBackgroundUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/1920x800/080C14/FFFFFF?text=DUS+Banner';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
@@ -53,55 +50,47 @@ const HomeBanner = ({
       id={sectionId}
       className={`relative w-full ${height} overflow-hidden ${bgColor} ${sectionClassName}`}
     >
-      {/* Background Image - Only render if src exists */}
       {hasValue(background.src) && (
-        <img
-          src={getBackgroundUrl(background.src)}
+        <ImageWithFallback
+          src={getImageSrc(background.src)}
           alt={background.alt || "Banner background"}
+          fallbackType="banner"
           className="w-full h-full object-cover object-center md:object-cover"
         />
       )}
 
-      {/* Dark Overlay - Only render if darkOverlay class exists */}
       {hasValue(overlay.darkOverlay) && (
         <div className={`absolute inset-0 ${overlay.darkOverlay}`}></div>
       )}
 
-      {/* Left Dark Gradient - Only render if gradient class exists */}
       {hasValue(overlay.gradient) && (
         <div className={`absolute inset-0 ${overlay.gradient}`}></div>
       )}
 
-      {/* Additional overlay for mobile - Always show */}
       <div className="absolute inset-0 bg-black/40 md:hidden"></div>
 
-      {/* Content - Only render if there's any content */}
       {hasAnyContent && (
         <div className="absolute left-0 md:left-5 inset-0 flex items-center p-5 md:p-12.5">
           <div className="w-full px-4 md:px-20 text-white space-y-3 md:space-y-5">
 
-            {/* Tagline - Only render if text exists */}
             {hasValue(content.tagline?.text) && (
               <p className={`bricolage-grotesque ${content.tagline.className || ''} text-white text-center md:text-left text-sm md:text-[30px] tracking-[2px] md:tracking-[4px]`}>
                 {content.tagline.text}
               </p>
             )}
 
-            {/* Title - Only render if text exists */}
             {hasValue(content.title?.text) && (
               <h1 className={`bricolage-grotesque font-bold leading-tight text-[32px] md:text-[100px] text-center md:text-left w-full md:w-215.75`}>
                 {content.title.text}
               </h1>
             )}
 
-            {/* Description - Only render if text exists */}
             {hasValue(content.description?.text) && (
               <p className={`bricolage-grotesque font-normal text-[14px] md:text-[30px] leading-tight text-center md:text-left text-white w-full md:w-215.75 line-clamp-3 md:line-clamp-none`}>
                 {content.description.text}
               </p>
             )}
 
-            {/* Buttons - Only render if buttons array has items */}
             {hasValue(buttons) && (
               <div className='flex flex-col sm:flex-row items-center gap-3 md:gap-6 pt-5 md:pt-7.5'>
                 {buttons.map((button) => (

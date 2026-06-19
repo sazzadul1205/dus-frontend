@@ -4,6 +4,9 @@
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from 'react-icons/fa';
 
+// Image Component with Fallback
+import ImageWithFallback from '../../Shared/ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -23,13 +26,6 @@ const iconMapping = {
   x: FaXTwitter,
 };
 
-// Get icon URL with fallback for custom icons
-const getIconUrl = (iconPath) => {
-  if (!iconPath) return null;
-  if (iconPath.startsWith('http')) return iconPath;
-  return iconPath;
-};
-
 const FollowUSSection = ({
   data,
   bgColor = 'bg-white',
@@ -37,33 +33,38 @@ const FollowUSSection = ({
   paddingX = 'px-4 sm:px-6 lg:px-8 xl:px-50',
   sectionClassName = '',
   sectionId = 'follow-us',
+  storageUrl = '',
 }) => {
-  // Handle both formats: { socialItems: [] } OR direct array []
   let socialItems = [];
   let title = "Follow Us";
 
   if (Array.isArray(data)) {
-    // Direct array format
     socialItems = data;
   } else if (data && typeof data === 'object') {
-    // Object format with socialItems property
     socialItems = data.socialItems || [];
     title = data.title || title;
   }
 
-  // Early return if no data
   if (!hasValue(socialItems) || socialItems.length === 0) {
     return null;
   }
+
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
 
   // Render function to get icon component or fallback image
   const renderIcon = (item) => {
     // If custom icon URL is provided, use it
     if (hasValue(item.iconUrl)) {
       return (
-        <img
-          src={getIconUrl(item.iconUrl)}
+        <ImageWithFallback
+          src={getImageSrc(item.iconUrl)}
           alt={item.label || 'Social icon'}
+          fallbackType="social"
           className="w-16 h-16 object-contain"
         />
       );
@@ -74,9 +75,10 @@ const FollowUSSection = ({
     if (!IconComponent) {
       // Fallback to placeholder if icon not found
       return (
-        <img
-          src={`https://placehold.co/66x66/1D2566/FFFFFF?text=${item.label?.charAt(0) || 'S'}`}
+        <ImageWithFallback
+          src={null}
           alt={item.label || 'Social icon'}
+          fallbackType="social"
           className="w-16 h-16 object-contain"
         />
       );

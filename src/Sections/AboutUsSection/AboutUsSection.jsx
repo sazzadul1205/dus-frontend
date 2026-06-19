@@ -6,6 +6,9 @@ import { Link } from 'react-router-dom';
 // Arrow Icon
 import ArrowIcon from '../../Shared/ArrowIcon';
 
+// Image Component with Fallback
+import ImageWithFallback from '../../Shared/ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -22,6 +25,7 @@ const AboutUsSection = ({
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
   sectionId = 'about-us',
+  storageUrl = '',
 }) => {
   // Don't render if no data
   if (!hasValue(data)) {
@@ -50,10 +54,11 @@ const AboutUsSection = ({
     return null;
   }
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=About+Us';
+  // Get image URL helper
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
@@ -111,10 +116,11 @@ const AboutUsSection = ({
                 {mission.items.map((item) => (
                   <div key={item.id} className='bg-[#F5F5F5] flex p-4 sm:p-5 lg:p-6 rounded-xl gap-4 group hover:shadow-lg transition-all duration-300 hover:-translate-y-1'>
                     {item.icon && (
-                      <img
-                        src={item.icon}
+                      <ImageWithFallback
+                        src={getImageSrc(item.icon)}
                         alt={item.alt || item.title || "Mission icon"}
-                        className='w-6 h-6 sm:w-7 sm:h-7 lg:w-7.5 lg:h-7.5 group-hover:scale-110 transition-transform duration-300'
+                        fallbackType="default"
+                        className="w-6 h-6 sm:w-7 sm:h-7 lg:w-7.5 lg:h-7.5 group-hover:scale-110 transition-transform duration-300"
                       />
                     )}
                     <div>
@@ -176,9 +182,10 @@ const AboutUsSection = ({
 
       {/* Right Section - Image */}
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
-        <img
-          src={getImageUrl(image.src)}
+        <ImageWithFallback
+          src={getImageSrc(image.src)}
           alt={image.alt || "About us image"}
+          fallbackType="about"
           className={`${image.className || ''} w-full h-auto lg:h-full object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
         />
       </div>

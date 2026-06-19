@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 // Components
 import ArrowIcon from '../../Shared/ArrowIcon';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -23,20 +24,16 @@ const LegalSection = ({
   paddingX = '',
   sectionClassName = '',
   sectionId = 'legal',
+  storageUrl = '',
 }) => {
-  // Early return if no data
-  if (!hasValue(data)) {
-    return null;
-  }
+  if (!hasValue(data)) return null;
 
-  // Safe destructuring with defaults
   const {
     background = {},
     overlay = {},
     textBox = {}
   } = data;
 
-  // Check if there's any content to display
   const hasBackground = hasValue(background.src);
   const hasOverlay = hasValue(overlay.darkOverlay);
   const hasTitle = hasValue(textBox.title) || hasValue(textBox.titleLine2);
@@ -44,14 +41,12 @@ const LegalSection = ({
 
   const hasAnyContent = hasBackground || hasOverlay || hasTitle || hasButton;
 
-  if (!hasAnyContent) {
-    return null;
-  }
+  if (!hasAnyContent) return null;
 
-  // Get background image URL with fallback
-  const getBackgroundUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/1920x400/080C14/FFFFFF?text=Legal';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
@@ -60,28 +55,24 @@ const LegalSection = ({
       id={sectionId}
       className={`relative w-full ${height} overflow-hidden ${bgColor} ${paddingY} ${paddingX} ${sectionClassName}`}
     >
-      {/* Background Image - Only render if src exists */}
       {hasValue(background.src) && (
-        <img
-          src={getBackgroundUrl(background.src)}
+        <ImageWithFallback
+          src={getImageSrc(background.src)}
           alt={background.alt || 'Legal background'}
+          fallbackType="banner"
           className="w-full h-full object-cover object-center md:object-cover"
         />
       )}
 
-      {/* Dark Overlay - Only render if darkOverlay class exists */}
       {hasValue(overlay.darkOverlay) && (
         <div className={`absolute inset-0 ${overlay.darkOverlay}`}></div>
       )}
 
-      {/* Additional overlay for mobile to ensure text readability */}
       <div className="absolute inset-0 bg-black/40 md:hidden"></div>
 
-      {/* White Box Text - Positioned at bottom right - Only show if there's content */}
       {(hasTitle || hasButton) && (
         <div className="absolute bottom-5 right-5 md:bottom-10 lg:bottom-12.5 md:right-10 lg:right-50 bg-white/90 backdrop-blur-sm p-6 md:p-8 lg:p-12.5 w-[calc(100%-2.5rem)] md:w-auto lg:w-182.5 h-auto lg:h-75 shadow-lg rounded-lg">
 
-          {/* Title */}
           {(hasValue(textBox.title) || hasValue(textBox.titleLine2)) && (
             <h3 className="text-black font-700 text-2xl md:text-3xl lg:text-[40px] bricolage-grotesque leading-tight">
               {hasValue(textBox.title) && <span>{textBox.title}</span>}
@@ -90,7 +81,6 @@ const LegalSection = ({
             </h3>
           )}
 
-          {/* Button */}
           {hasValue(textBox.buttonText) && hasValue(textBox.buttonLink) && (
             <div className='pt-6 md:pt-7 lg:pt-9'>
               <Link

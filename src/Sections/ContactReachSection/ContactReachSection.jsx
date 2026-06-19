@@ -2,6 +2,7 @@
 
 // Components
 import ArrowIcon from '../../Shared/ArrowIcon';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
 // Utility function to check if value exists
 const hasValue = (value) => {
@@ -19,8 +20,8 @@ const ContactReachSection = ({
   paddingX = 'px-6 sm:px-10 md:px-16 lg:px-20 xl:px-50',
   sectionClassName = '',
   sectionId = 'contact-reach',
+  storageUrl = '',
 }) => {
-  // Safe destructuring with defaults
   const {
     image,
     title = "Reach out to us today!",
@@ -30,16 +31,14 @@ const ContactReachSection = ({
   const inputClassName =
     'mt-2 w-full rounded-xl border border-[#D6DCEF] bg-white px-5 py-4 text-[16px] text-[#080C14] outline-none transition-colors placeholder:text-[#A6B0D1] focus:border-[#009BE2]';
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/800x800/1500FF/FFFFFF?text=Contact+Us';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
-  // Early return if no image (optional - you might want to render form even without image)
   if (!hasValue(image)) {
-    // Still render the form, just without the image
     console.warn('ContactReachSection: No image provided');
   }
 
@@ -48,16 +47,16 @@ const ContactReachSection = ({
       id={sectionId}
       className={`flex flex-col lg:flex-row justify-center items-stretch ${bgColor} ${sectionClassName}`}
     >
-      {/* Left Image Section - Full height on desktop */}
+      {/* Left Image Section */}
       <div className='w-full lg:w-1/2 relative'>
         {hasValue(image) && (
           <>
-            <img
-              src={getImageUrl(image)}
-              alt='Contact Reach'
-              className='w-full h-full object-cover lg:max-h-none max-h-100'
+            <ImageWithFallback
+              src={getImageSrc(image)}
+              alt="Contact Reach"
+              fallbackType="default"
+              className="w-full h-full object-cover lg:max-h-none max-h-100"
             />
-            {/* Gradient Overlay */}
             <div className='absolute inset-0 bg-linear-to-b from-[#1500FF] via-[#6F07E5] to-[#F10A0A] opacity-50' />
           </>
         )}

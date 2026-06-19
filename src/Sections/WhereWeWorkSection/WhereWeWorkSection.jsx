@@ -1,5 +1,7 @@
 // dus-frontend/src/Sections/WhereWeWorkSection/WhereWeWorkSection.jsx
 
+import ImageWithFallback from '../../Shared/ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (!value && value !== 0) return false;
@@ -15,27 +17,19 @@ const WhereWeWorkSection = ({
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
   sectionId = 'where-we-work',
+  storageUrl = '',
 }) => {
-  // Early return if no data
   if (!hasValue(data)) return null;
 
   const { section = {}, stats = [], image = {} } = data;
 
-  // Early return if no content
   if (!section.title && !stats.length && !image.src) return null;
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=Where+We+Work';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
-  };
-
-  // Get icon URL with fallback
-  const getIconUrl = (iconPath) => {
-    if (!iconPath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Stat';
-    if (iconPath.startsWith('http')) return iconPath;
-    return iconPath;
   };
 
   return (
@@ -43,18 +37,14 @@ const WhereWeWorkSection = ({
       id={sectionId}
       className={`flex flex-col lg:flex-row justify-between ${bgColor} gap-8 lg:gap-15 ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Left Section - Text Content */}
       {(section.title || stats.length > 0) && (
         <div className='w-full lg:w-1/2 flex flex-col justify-between space-y-8 lg:space-y-12.5'>
-
-          {/* Section Title */}
           {section.title && (
             <h1 className='bricolage-grotesque font-700 text-[28px] sm:text-[32px] md:text-[36px] lg:text-[40px] text-[#080C14]'>
               {section.title}
             </h1>
           )}
 
-          {/* Stats Grid */}
           {stats.length > 0 && (
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6'>
               {stats.map((stat) => (
@@ -63,9 +53,10 @@ const WhereWeWorkSection = ({
                   className='bg-[#F5F5F5] text-center p-5 sm:p-6 md:p-7 lg:p-8 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl group cursor-pointer'
                 >
                   {stat.icon && (
-                    <img
-                      src={getIconUrl(stat.icon)}
+                    <ImageWithFallback
+                      src={getImageSrc(stat.icon)}
                       alt={stat.alt || stat.label || "Statistic icon"}
+                      fallbackType="stat"
                       className='w-10 h-10 sm:w-12 sm:h-12 md:w-13 md:h-13 lg:w-15 lg:h-15 mx-auto mb-4 sm:mb-5 md:mb-6 lg:mb-7.5 group-hover:scale-110 transition-transform duration-300'
                     />
                   )}
@@ -86,11 +77,11 @@ const WhereWeWorkSection = ({
         </div>
       )}
 
-      {/* Right Section - Image */}
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0'>
-        <img
-          src={getImageUrl(image.src)}
+        <ImageWithFallback
+          src={getImageSrc(image.src)}
           alt={image.alt || "Where we work image"}
+          fallbackType="default"
           className={`${image.className || ''} w-full h-auto lg:h-232.5 object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl`}
         />
       </div>

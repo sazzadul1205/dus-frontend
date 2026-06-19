@@ -7,6 +7,9 @@ import { Link, useLocation } from 'react-router-dom';
 // Icons
 import { FaBars, FaTimes, FaChevronDown } from 'react-icons/fa';
 
+// Image Component with Fallback
+import ImageWithFallback from './ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -16,17 +19,14 @@ const hasValue = (value) => {
   return true;
 };
 
-const Navbar = ({ navbarData }) => {
-  // State
+const Navbar = ({ navbarData, storageUrl = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({});
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState({});
 
-  // Get current URL path
   const location = useLocation();
   const currentPath = location.pathname;
 
-  // Check if a link is active
   const isActive = (href) => {
     if (!hasValue(href)) return false;
     if (href === '/') {
@@ -35,7 +35,6 @@ const Navbar = ({ navbarData }) => {
     return currentPath.startsWith(href);
   };
 
-  // Toggle dropdown
   const toggleDropdown = (index) => {
     setOpenDropdowns(prev => ({
       ...prev,
@@ -43,7 +42,6 @@ const Navbar = ({ navbarData }) => {
     }));
   };
 
-  // Toggle mobile dropdown
   const toggleMobileDropdown = (index) => {
     setMobileDropdownOpen(prev => ({
       ...prev,
@@ -51,12 +49,8 @@ const Navbar = ({ navbarData }) => {
     }));
   };
 
-  // Don't render if no data
-  if (!hasValue(navbarData)) {
-    return null;
-  }
+  if (!hasValue(navbarData)) return null;
 
-  // Safe destructuring with defaults
   const {
     logo = {},
     navLinks = [],
@@ -69,31 +63,33 @@ const Navbar = ({ navbarData }) => {
   const hasNavLinks = hasValue(navLinks);
   const hasButton = hasValue(button.text) && hasValue(button.href);
 
-  // If no content, don't render
-  if (!hasLogo && !hasNavLinks && !hasButton) {
-    return null;
-  }
+  if (!hasLogo && !hasNavLinks && !hasButton) return null;
+
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-20">
       <div className="mx-auto px-5 md:px-20 py-3">
         <div className="flex justify-between items-center h-20">
 
-          {/* Logo */}
           {hasLogo && (
             <Link to={logo.href || '/'} className="flex items-center space-x-2 group">
-              <img
-                src={logo.src}
+              <ImageWithFallback
+                src={getImageSrc(logo.src)}
                 alt={logo.alt || 'Logo'}
+                fallbackType="logo"
                 className={logo.className || 'h-10 w-auto'}
               />
             </Link>
           )}
 
-          {/* Desktop Navigation */}
           <div className='flex items-center space-x-8'>
 
-            {/* Navigation Links */}
             {hasNavLinks && (
               <ul className="hidden lg:flex items-center space-x-8">
                 {navLinks.map((link, index) => {
@@ -103,7 +99,6 @@ const Navbar = ({ navbarData }) => {
                   return (
                     <li key={link.name || index} className="relative group">
                       {hasDropdown ? (
-                        // Dropdown Link
                         <div>
                           <button
                             onClick={() => toggleDropdown(index)}
@@ -116,7 +111,6 @@ const Navbar = ({ navbarData }) => {
                             <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${openDropdowns[index] ? 'rotate-180' : ''}`} />
                           </button>
 
-                          {/* Dropdown Menu */}
                           {openDropdowns[index] && (
                             <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                               {(link.dropdown || dropdowns[index] || []).map((dropdownItem, idx) => (
@@ -133,7 +127,6 @@ const Navbar = ({ navbarData }) => {
                           )}
                         </div>
                       ) : (
-                        // Regular Link
                         <Link
                           to={link.href}
                           className={`relative font-medium transition-all duration-300 group ${active
@@ -142,7 +135,6 @@ const Navbar = ({ navbarData }) => {
                             }`}
                         >
                           {link.name}
-                          {/* Bottom blue line - active state */}
                           <span
                             className={`absolute bottom-0 left-0 h-0.5 bg-[#009BE2] transition-all duration-300 ${active
                               ? 'w-full'
@@ -157,7 +149,6 @@ const Navbar = ({ navbarData }) => {
               </ul>
             )}
 
-            {/* Desktop Contact Button */}
             {hasButton && (
               <Link
                 to={button.href}
@@ -167,7 +158,6 @@ const Navbar = ({ navbarData }) => {
               </Link>
             )}
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={mobileMenu.className || "md:hidden text-gray-700 hover:text-blue-600 focus:outline-none"}
@@ -178,7 +168,6 @@ const Navbar = ({ navbarData }) => {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden
             ${isOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}

@@ -8,9 +8,10 @@ import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
 // Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
-// Internal components (used as fallback or for special handling)
-const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
+// Internal components
+const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId, storageUrl = '' }) => {
   const tagColors = [
     "bg-[#3866FF]", "bg-[#503AF2]", "bg-[#00B894]",
     "bg-[#FF6B6B]", "bg-[#FDCB6E]", "bg-[#6C5CE7]",
@@ -20,14 +21,22 @@ const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName
 
   const tags = blogData.tags || [];
 
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
+
   return (
     <section id={sectionId} className={`${bgColor || ''} ${paddingY || ''} ${paddingX || ''} ${sectionClassName || ''}`}>
       <div className="relative isolate w-full h-125 overflow-hidden bg-[#080C14] rounded-2xl">
         <div className="absolute inset-0 z-0">
           {blogData?.image && (
-            <img
-              src={blogData.image}
+            <ImageWithFallback
+              src={getImageSrc(blogData.image)}
               alt={blogData.title || 'Blog banner'}
+              fallbackType="banner"
               className="h-full w-full object-cover object-center"
             />
           )}
@@ -61,7 +70,12 @@ const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName
           <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap text-white text-[12px] sm:text-[14px] font-semibold">
             <div className="flex items-center gap-2.5">
               <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                <img src="https://placehold.co/20x20" alt="Author" className="w-5 h-5 object-cover" />
+                <ImageWithFallback
+                  src="https://placehold.co/20x20"
+                  alt="Author"
+                  fallbackType="user"
+                  className="w-5 h-5 object-cover"
+                />
                 <div className="absolute inset-0 bg-[#503AF2]/40" />
               </div>
               <p className="flex items-center">
@@ -85,19 +99,27 @@ const BannerSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName
   );
 };
 
-const BlogContentSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId }) => {
+const BlogContentSection = ({ blogData, bgColor, paddingY, paddingX, sectionClassName, sectionId, storageUrl = '' }) => {
   if (!blogData) return null;
 
   const content = blogData.full_content || blogData.fullContent || '';
+
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
 
   return (
     <section id={sectionId} className={`${bgColor || 'bg-white'} ${paddingY || 'py-12 lg:py-16'} ${paddingX || 'px-4'} ${sectionClassName || ''}`}>
       <div className="relative z-10 max-w-275 mx-auto">
         {blogData?.image && (
           <div className="-mt-16 sm:-mt-20 lg:-mt-24">
-            <img
-              src={blogData.image}
+            <ImageWithFallback
+              src={getImageSrc(blogData.image)}
               alt={blogData?.title || "Blog main image"}
+              fallbackType="blog"
               className="w-full h-auto max-h-96 sm:max-h-125 object-cover object-center rounded-[28px] shadow-2xl"
             />
           </div>
@@ -148,10 +170,8 @@ export default function BlogDetailsContent({
   slug,
   ...pageData
 }) {
-  // Get blog data from props or find it from blogsData
   const blogData = propBlogData || blogsData?.find(item => item.slug === slug);
 
-  // Show not found if no blog data
   if (!blogData) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -166,7 +186,6 @@ export default function BlogDetailsContent({
     );
   }
 
-  // Parse tags if they're a string
   let parsedBlogData = { ...blogData };
   if (blogData?.tags && typeof blogData.tags === 'string') {
     try {
@@ -177,23 +196,18 @@ export default function BlogDetailsContent({
     }
   }
 
-  // Filter enabled sections
   const allSections = (sectionConfigs || [])
     .filter(section => section.is_enabled === 1);
 
-  // Separate fixed sections from dynamic sections
   const fixedSections = allSections.filter(section => section.is_fixed_section === 1);
   const dynamicSections = allSections.filter(section => section.is_fixed_section !== 1)
     .sort((a, b) => a.display_order - b.display_order);
 
-  // Find banner section (could be in dynamic sections)
   const bannerSection = dynamicSections.find(s => s.component === 'BannerSection');
   const otherDynamicSections = dynamicSections.filter(s => s.component !== 'BannerSection');
 
-  // MERGE: Override banner data with blog data for dynamic title
   let mergedPageData = { ...pageData };
 
-  // If we have bannerData and blogData, update the banner title dynamically
   if (mergedPageData.bannerData && blogData) {
     mergedPageData.bannerData = {
       ...mergedPageData.bannerData,
@@ -207,11 +221,8 @@ export default function BlogDetailsContent({
     };
   }
 
-  // Flatten the inherited `pageData` prop from DynamicPage so section renderers
-  // can read keys like `relatedBlogsData`, `bannerData`, and `upcomingEventsData`.
   const inheritedPageData = pageData.pageData || {};
 
-  // Merge pageData with our custom data
   const updatedPageData = {
     ...inheritedPageData,
     ...mergedPageData,
@@ -243,7 +254,6 @@ export default function BlogDetailsContent({
 
   return (
     <>
-      {/* Banner - Use DynamicSectionRenderer if available, otherwise fallback to BannerSection component */}
       {bannerSection && (
         <DynamicSectionRenderer
           key={bannerSection.id}
@@ -253,11 +263,9 @@ export default function BlogDetailsContent({
         />
       )}
 
-      {/* Fixed Sections - These are special components that need custom rendering */}
       {fixedSections.map((section) => {
         const { component, custom_props = {} } = section;
 
-        // Parse custom_props if it's a string
         let parsedCustomProps = {};
         if (custom_props) {
           try {
@@ -274,17 +282,18 @@ export default function BlogDetailsContent({
             <BlogContentSection
               key={section.id}
               blogData={parsedBlogData}
+              storageUrl={storageUrl}
               {...parsedCustomProps}
             />
           );
         }
 
-        // If there's a BannerSection in fixed sections (unlikely but handle it)
         if (component === 'BannerSection') {
           return (
             <BannerSection
               key={section.id}
               blogData={parsedBlogData}
+              storageUrl={storageUrl}
               {...parsedCustomProps}
             />
           );
@@ -293,7 +302,6 @@ export default function BlogDetailsContent({
         return null;
       })}
 
-      {/* Other Dynamic Sections (non-fixed, non-banner) */}
       {otherDynamicSections.map((section) => (
         <DynamicSectionRenderer
           key={section.id}

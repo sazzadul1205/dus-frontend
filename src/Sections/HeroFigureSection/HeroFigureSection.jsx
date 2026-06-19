@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 // Components
 import ArrowIcon from '../../Shared/ArrowIcon';
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
 // Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
@@ -21,21 +22,20 @@ const hasValue = (value) => {
 const HeroFigureSection = ({
   data,
   sectionId = 'hero-figure',
-  layout = 'text-left',   // 'text-left' or 'text-right'
-  bgColor = 'bg-white',   // Customizable background color
-  bgImage = null,         // Customizable background image
-  bgOverlay = null,       // Customizable overlay for background image
+  layout = 'text-left',
+  bgColor = 'bg-white',
+  bgImage = null,
+  bgOverlay = null,
   paddingY = 'py-10 sm:py-15 md:py-25 lg:py-37.5',
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
+  storageUrl = '',
 }) => {
-  // Early return if no data
   if (!hasValue(data)) {
     console.warn('HeroFigureSection: No data provided');
     return null;
   }
 
-  // Safe destructuring with defaults
   const {
     section = {},
     content = {},
@@ -43,7 +43,6 @@ const HeroFigureSection = ({
     btn = {}
   } = data;
 
-  // Check if there's any content to display
   const hasTitle = hasValue(section?.title);
   const hasContent = hasValue(content?.html);
   const hasButton = hasValue(btn?.text) && hasValue(btn?.link);
@@ -51,38 +50,32 @@ const HeroFigureSection = ({
 
   const hasAnyContent = hasTitle || hasContent || hasButton || hasImage;
 
-  if (!hasAnyContent) {
-    return null;
-  }
+  if (!hasAnyContent) return null;
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/800x600/009BE2/FFFFFF?text=Hero+Image';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
-  // Get background image URL with fallback
   const getBgImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
-  // Determine image position based on layout
   const isImageLeft = layout === 'text-right';
 
-  // Render text content
   const renderTextContent = () => (
     <div className='w-full lg:w-1/2 flex flex-col justify-between relative z-10'>
-      {/* Only render section title if it exists */}
       {hasTitle && (
         <h1 className='bricolage-grotesque font-700 text-[32px] sm:text-[36px] lg:text-[40px] text-black pb-2'>
           {section.title}
         </h1>
       )}
 
-      {/* Render HTML content with 730px max height and ellipsis */}
       {hasContent && (
         <div className="relative">
           <div
@@ -96,12 +89,10 @@ const HeroFigureSection = ({
             }}
             dangerouslySetInnerHTML={createSanitizedHTML(content.html)}
           />
-          {/* Ellipsis indicator - Only show if content overflows */}
           <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
         </div>
       )}
 
-      {/* Render button if btn exists */}
       {hasButton && (
         <div className='pt-8'>
           <Link
@@ -116,40 +107,33 @@ const HeroFigureSection = ({
     </div>
   );
 
-  // Render image
   const renderImage = () => (
     hasImage && (
       <div className='w-full lg:w-1/2 flex mt-8 lg:mt-0 relative z-10'>
-        <img
-          src={getImageUrl(image.src)}
+        <ImageWithFallback
+          src={getImageSrc(image.src)}
           alt={image.alt || 'Section image'}
+          fallbackType="default"
           className={image.className || 'w-full h-auto lg:h-full object-cover rounded-2xl sm:rounded-3xl lg:rounded-4xl'}
         />
       </div>
     )
   );
 
-  // Generate background style
-  const getBackgroundStyle = () => {
-    const bgImageUrl = getBgImageUrl(bgImage);
-    if (hasValue(bgImageUrl)) {
-      return {
-        backgroundImage: `url(${bgImageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      };
-    }
-    return {};
-  };
+  const bgImageUrl = getBgImageUrl(bgImage);
+  const backgroundStyle = hasValue(bgImageUrl) ? {
+    backgroundImage: `url(${bgImageUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  } : {};
 
   return (
     <section
       id={sectionId}
       className={`relative ${bgColor} ${paddingY} ${paddingX} ${sectionClassName}`}
-      style={getBackgroundStyle()}
+      style={backgroundStyle}
     >
-      {/* Background overlay if bgImage is provided */}
       {hasValue(bgImage) && hasValue(bgOverlay) && (
         <div className={`absolute inset-0 ${bgOverlay}`}></div>
       )}

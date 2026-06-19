@@ -9,6 +9,9 @@ import { FaFacebook, FaInstagram, FaLinkedin, FaXTwitter, FaUser } from "react-i
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+// Image Component with Fallback
+import ImageWithFallback from './ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -26,30 +29,22 @@ const iconMap = {
   FaXTwitter: FaXTwitter
 };
 
-const TopBar = ({ topBarData, storageUrl, auth }) => {
-  // Get auth from props (passed from parent component)
+const TopBar = ({ topBarData, storageUrl = '', auth }) => {
   const user = auth?.user;
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURN
-  // States
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Router hooks
   const navigate = useNavigate();
 
-  // Refs
   const langRef = useRef(null);
   const userRef = useRef(null);
   const searchRef = useRef(null);
 
-  // Initialize language - MUST be called before early return
-  // We'll compute this inside the component but after hooks
   const getInitialLanguage = () => {
-    // If no data, return default
     if (!hasValue(topBarData)) {
       return {
         code: 'us',
@@ -74,7 +69,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
       console.error('Error loading language from localStorage:', error);
     }
 
-    // Default to English if found, otherwise first language
     const englishLang = languagesToShow.find(lang => lang.code === 'us');
     return englishLang || languagesToShow[0] || {
       code: 'us',
@@ -85,7 +79,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
 
   const [selectedLanguage, setSelectedLanguage] = useState(getInitialLanguage);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -105,12 +98,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [searchQuery]);
 
-  // Don't render if no data (EARLY RETURN AFTER ALL HOOKS)
-  if (!hasValue(topBarData)) {
-    return null;
-  }
+  if (!hasValue(topBarData)) return null;
 
-  // Safe destructuring with defaults
   const {
     contactInfo = {},
     languages = [],
@@ -118,7 +107,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
     userMenu = {}
   } = topBarData;
 
-  // Hardcoded user menu items (can be moved to parent component)
   const defaultUserMenu = {
     guest: [
       { label: 'Login', route: '/login', type: 'link' },
@@ -132,8 +120,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
   };
 
   const finalUserMenu = hasValue(userMenu) ? userMenu : defaultUserMenu;
-
-  // Filter to only show English (us) and Bengali (bd) from server data
   const languagesToShow = languages.filter(lang =>
     lang.code === 'us' || lang.code === 'bd'
   );
@@ -142,8 +128,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
     setSelectedLanguage(language);
     localStorage.setItem('selectedLanguage', JSON.stringify(language));
     setIsLangDropdownOpen(false);
-
-    // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: language }));
   };
 
@@ -155,39 +139,40 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
   };
 
   const handleLogout = () => {
-    // Handle logout - this would typically call an API endpoint
-    // For now, we'll just navigate to login page
-    // In a real app, you'd call your logout API here
     navigate('/login');
-    // You might also want to clear auth state here
   };
 
-  // Check if contact info exists
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    return imagePath;
+  };
+
   const hasContactInfo = hasValue(contactInfo.email?.text) ||
     hasValue(contactInfo.phone?.text) ||
     hasValue(contactInfo.hours?.text);
 
-  // Check if social links exist
   const hasSocialLinks = hasValue(socialLinks);
   const hasLanguages = hasValue(languagesToShow);
 
-  // If no content at all, don't render
-  if (!hasContactInfo && !hasSocialLinks && !hasLanguages) {
-    return null;
-  }
+  if (!hasContactInfo && !hasSocialLinks && !hasLanguages) return null;
 
   return (
     <>
-      {/* Desktop Top Bar - Hidden on mobile */}
+      {/* Desktop Top Bar */}
       <div className='hidden lg:flex justify-between items-center px-10 py-3 bg-[#080C14] relative z-50'>
-        {/* Left - Contact Info */}
         {hasContactInfo && (
           <div className='flex items-center space-x-6'>
-            {/* Email */}
             {hasValue(contactInfo.email?.text) && (
               <div className='flex items-center space-x-2'>
                 {hasValue(contactInfo.email?.icon) && (
-                  <img src={contactInfo.email.icon} alt={contactInfo.email.alt || 'Email'} className="w-4 h-4" />
+                  <ImageWithFallback
+                    src={getImageSrc(contactInfo.email.icon)}
+                    alt={contactInfo.email.alt || 'Email'}
+                    fallbackType="default"
+                    className="w-4 h-4"
+                  />
                 )}
                 <a href={`mailto:${contactInfo.email.text}`} className='text-white text-sm hover:text-[#009BE2] transition-colors'>
                   {contactInfo.email.text}
@@ -195,11 +180,15 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               </div>
             )}
 
-            {/* Phone */}
             {hasValue(contactInfo.phone?.text) && (
               <div className='flex items-center space-x-2'>
                 {hasValue(contactInfo.phone?.icon) && (
-                  <img src={contactInfo.phone.icon} alt={contactInfo.phone.alt || 'Phone'} className="w-4 h-4" />
+                  <ImageWithFallback
+                    src={getImageSrc(contactInfo.phone.icon)}
+                    alt={contactInfo.phone.alt || 'Phone'}
+                    fallbackType="default"
+                    className="w-4 h-4"
+                  />
                 )}
                 <a href={`tel:${contactInfo.phone.text.replace(/\s/g, '')}`} className='text-white text-sm hover:text-[#009BE2] transition-colors'>
                   {contactInfo.phone.text}
@@ -207,11 +196,15 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               </div>
             )}
 
-            {/* Hours */}
             {hasValue(contactInfo.hours?.text) && (
               <div className='flex items-center space-x-2'>
                 {hasValue(contactInfo.hours?.icon) && (
-                  <img src={contactInfo.hours.icon} alt={contactInfo.hours.alt || 'Hours'} className="w-4 h-4" />
+                  <ImageWithFallback
+                    src={getImageSrc(contactInfo.hours.icon)}
+                    alt={contactInfo.hours.alt || 'Hours'}
+                    fallbackType="default"
+                    className="w-4 h-4"
+                  />
                 )}
                 <p className='text-white text-sm'>{contactInfo.hours.text}</p>
               </div>
@@ -219,9 +212,7 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
           </div>
         )}
 
-        {/* Right - Social Media Section */}
         <div className="flex items-center gap-3 space-x-4">
-          {/* Language Dropdown */}
           {hasLanguages && (
             <div className="relative" ref={langRef}>
               <button
@@ -233,13 +224,17 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                 aria-label="Select language"
               >
                 {hasValue(selectedLanguage?.flag) && (
-                  <img src={selectedLanguage.flag} alt={selectedLanguage.name} className="w-5 h-5" />
+                  <ImageWithFallback
+                    src={getImageSrc(selectedLanguage.flag)}
+                    alt={selectedLanguage.name}
+                    fallbackType="flag"
+                    className="w-5 h-5"
+                  />
                 )}
                 <span className="text-white text-sm hidden md:inline">{selectedLanguage.name}</span>
                 {isLangDropdownOpen ? <FaAngleUp className="text-white transition-transform duration-200" /> : <FaAngleDown className="text-white transition-transform duration-200" />}
               </button>
 
-              {/* Language Dropdown Menu with Animation */}
               <div
                 className={`absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 w-40 z-50 transition-all duration-300 origin-top-right
                   ${isLangDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}
@@ -251,7 +246,12 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                     className={`flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left transition-colors duration-150 ${selectedLanguage.code === lang.code ? 'bg-blue-50' : ''
                       }`}
                   >
-                    <img src={lang.flag} alt={lang.name} className="w-5 h-5" />
+                    <ImageWithFallback
+                      src={getImageSrc(lang.flag)}
+                      alt={lang.name}
+                      fallbackType="flag"
+                      className="w-5 h-5"
+                    />
                     <span className={`text-sm ${selectedLanguage.code === lang.code ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
                       {lang.name}
                     </span>
@@ -264,12 +264,10 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
             </div>
           )}
 
-          {/* Vertical Line - Only if both sides have content */}
           {hasLanguages && (hasSocialLinks || hasContactInfo) && (
             <div className="w-px h-5 bg-gray-600"></div>
           )}
 
-          {/* Expandable Search with Animation */}
           <div className="relative" ref={searchRef}>
             <div className="overflow-hidden">
               <div className={`transition-all duration-300 ease-in-out ${isSearchExpanded ? 'w-64 opacity-100' : 'w-6 opacity-100'}`}>
@@ -303,10 +301,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
             </div>
           </div>
 
-          {/* Vertical Line */}
           <div className="w-px h-5 bg-gray-600"></div>
 
-          {/* User Dropdown */}
           <div className="relative" ref={userRef}>
             <button
               onClick={() => {
@@ -319,13 +315,11 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               <FaUser className="text-xl text-white" />
             </button>
 
-            {/* User Dropdown Menu with Animation */}
             <div
               className={`absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 w-48 z-50 transition-all duration-300 origin-top-right
                 ${isUserDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}
             >
               {user ? (
-                // Authenticated User Menu
                 <>
                   <div className="px-4 py-2 border-b border-gray-200">
                     <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -358,7 +352,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                   ))}
                 </>
               ) : (
-                // Guest User Menu
                 finalUserMenu.guest?.map((item) => (
                   <Link
                     key={item.label}
@@ -373,10 +366,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
             </div>
           </div>
 
-          {/* Vertical Line */}
           {hasSocialLinks && <div className="w-px h-5 bg-gray-600"></div>}
 
-          {/* Social Icons with Hover Animation */}
           {hasSocialLinks && socialLinks.map((social) => {
             const IconComponent = iconMap[social.iconName];
             if (!IconComponent) return null;
@@ -396,11 +387,9 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
         </div>
       </div>
 
-      {/* Mobile Top Bar - Visible only on mobile */}
+      {/* Mobile Top Bar */}
       <div className='lg:hidden bg-[#080C14] px-4 py-2 relative z-50'>
-        {/* Mobile Header with Logo and Menu Button */}
         <div className='flex justify-between items-center'>
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="text-white focus:outline-none"
@@ -418,18 +407,21 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
           </button>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         <div
           className={`transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-150 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
         >
           <div className="space-y-4 pb-4">
-            {/* Contact Info - Mobile */}
             {hasContactInfo && (
               <div className="space-y-3">
                 {hasValue(contactInfo.email?.text) && (
                   <a href={`mailto:${contactInfo.email.text}`} className="flex items-center gap-2 text-white text-sm hover:text-[#009BE2] transition-colors">
                     {hasValue(contactInfo.email?.icon) && (
-                      <img src={contactInfo.email.icon} alt={contactInfo.email.alt || 'Email'} className="w-4 h-4" />
+                      <ImageWithFallback
+                        src={getImageSrc(contactInfo.email.icon)}
+                        alt={contactInfo.email.alt || 'Email'}
+                        fallbackType="default"
+                        className="w-4 h-4"
+                      />
                     )}
                     <span>{contactInfo.email.text}</span>
                   </a>
@@ -438,7 +430,12 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                 {hasValue(contactInfo.phone?.text) && (
                   <a href={`tel:${contactInfo.phone.text.replace(/\s/g, '')}`} className="flex items-center gap-2 text-white text-sm hover:text-[#009BE2] transition-colors">
                     {hasValue(contactInfo.phone?.icon) && (
-                      <img src={contactInfo.phone.icon} alt={contactInfo.phone.alt || 'Phone'} className="w-4 h-4" />
+                      <ImageWithFallback
+                        src={getImageSrc(contactInfo.phone.icon)}
+                        alt={contactInfo.phone.alt || 'Phone'}
+                        fallbackType="default"
+                        className="w-4 h-4"
+                      />
                     )}
                     <span>{contactInfo.phone.text}</span>
                   </a>
@@ -447,7 +444,12 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                 {hasValue(contactInfo.hours?.text) && (
                   <div className="flex items-center gap-2 text-white text-sm">
                     {hasValue(contactInfo.hours?.icon) && (
-                      <img src={contactInfo.hours.icon} alt={contactInfo.hours.alt || 'Hours'} className="w-4 h-4" />
+                      <ImageWithFallback
+                        src={getImageSrc(contactInfo.hours.icon)}
+                        alt={contactInfo.hours.alt || 'Hours'}
+                        fallbackType="default"
+                        className="w-4 h-4"
+                      />
                     )}
                     <span>{contactInfo.hours.text}</span>
                   </div>
@@ -455,10 +457,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               </div>
             )}
 
-            {/* Divider */}
             {hasContactInfo && <div className="border-t border-gray-700"></div>}
 
-            {/* Mobile Search */}
             <form onSubmit={handleSearchSubmit} className="flex items-center">
               <input
                 type="text"
@@ -475,10 +475,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               </button>
             </form>
 
-            {/* Divider */}
             <div className="border-t border-gray-700"></div>
 
-            {/* Mobile Language Selector */}
             {hasLanguages && (
               <>
                 <div>
@@ -488,7 +486,12 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                       onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
                       className="flex items-center gap-2"
                     >
-                      <img src={selectedLanguage.flag} alt={selectedLanguage.name} className="w-5 h-5" />
+                      <ImageWithFallback
+                        src={getImageSrc(selectedLanguage.flag)}
+                        alt={selectedLanguage.name}
+                        fallbackType="flag"
+                        className="w-5 h-5"
+                      />
                       <span className="text-white text-sm">{selectedLanguage.name}</span>
                       {isLangDropdownOpen ? <FaAngleUp className="text-white" /> : <FaAngleDown className="text-white" />}
                     </button>
@@ -503,7 +506,12 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                           className={`flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-left transition-colors duration-150 ${selectedLanguage.code === lang.code ? 'bg-blue-50' : ''
                             }`}
                         >
-                          <img src={lang.flag} alt={lang.name} className="w-5 h-5" />
+                          <ImageWithFallback
+                            src={getImageSrc(lang.flag)}
+                            alt={lang.name}
+                            fallbackType="flag"
+                            className="w-5 h-5"
+                          />
                           <span className={`text-sm ${selectedLanguage.code === lang.code ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
                             {lang.name}
                           </span>
@@ -516,12 +524,10 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
                   )}
                 </div>
 
-                {/* Divider */}
                 <div className="border-t border-gray-700"></div>
               </>
             )}
 
-            {/* Mobile User Menu */}
             <div>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
@@ -589,10 +595,8 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
               )}
             </div>
 
-            {/* Divider */}
             {hasSocialLinks && <div className="border-t border-gray-700"></div>}
 
-            {/* Mobile Social Icons */}
             {hasSocialLinks && (
               <div className="flex justify-center gap-4">
                 {socialLinks.map((social) => {
@@ -617,7 +621,6 @@ const TopBar = ({ topBarData, storageUrl, auth }) => {
         </div>
       </div>
 
-      {/* Add custom animation keyframes */}
       <style>{`
         @keyframes slideIn {
           from {

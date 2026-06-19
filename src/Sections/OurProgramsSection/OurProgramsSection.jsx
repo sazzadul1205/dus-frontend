@@ -6,6 +6,7 @@ import { useRef, useEffect, useState } from 'react';
 
 // Arrow Icon
 import ArrowIcon from "../../Shared/ArrowIcon";
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 
 // Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
@@ -38,17 +39,16 @@ const OurProgramsSection = ({
   sectionId = 'our-programs',
   limit = null,
   showFeatured = false,
+  storageUrl = '',
 }) => {
   const [visibleCards, setVisibleCards] = useState([]);
   const cardsRef = useRef([]);
 
-  // Detect when cards are in view
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const cardId = parseInt(entry.target.getAttribute("data-id"));
-
           if (entry.isIntersecting) {
             setVisibleCards((prev) => {
               if (!prev.includes(cardId)) {
@@ -59,9 +59,7 @@ const OurProgramsSection = ({
           }
         });
       },
-      {
-        threshold: 0.25,
-      }
+      { threshold: 0.25 }
     );
 
     cardsRef.current.forEach((card) => {
@@ -71,14 +69,8 @@ const OurProgramsSection = ({
     return () => observer.disconnect();
   }, []);
 
-  // Early return if no data
-  if (!hasValue(data)) {
-    return null;
-  }
+  if (!hasValue(data)) return null;
 
-  // Handle both formats:
-  // 1. { section: {...}, programs: [...] } - from custom_section_data
-  // 2. [...] - direct array from programs.json
   let section = {};
   let programList = [];
 
@@ -100,19 +92,19 @@ const OurProgramsSection = ({
 
   const header = useDefaultHeader
     ? {
-        ...DEFAULT_SECTION,
-        ...section,
-        button: {
-          ...DEFAULT_SECTION.button,
-          ...(section.button || {}),
-        },
-      }
+      ...DEFAULT_SECTION,
+      ...section,
+      button: {
+        ...DEFAULT_SECTION.button,
+        ...(section.button || {}),
+      },
+    }
     : {
-        ...section,
-        button: {
-          ...(section.button || {}),
-        },
-      };
+      ...section,
+      button: {
+        ...(section.button || {}),
+      },
+    };
 
   const hasTitle = hasValue(header.title);
   const hasDescription = hasValue(header.description);
@@ -121,11 +113,8 @@ const OurProgramsSection = ({
   const showHeader = hasTitle || hasDescription || hasButton;
   const hasPrograms = hasValue(programList);
 
-  if (!showHeader && !hasPrograms) {
-    return null;
-  }
+  if (!showHeader && !hasPrograms) return null;
 
-  // Filter programs based on props
   let displayPrograms = [...programList];
 
   if (showFeatured) {
@@ -140,7 +129,6 @@ const OurProgramsSection = ({
     displayPrograms = displayPrograms.slice(0, limit);
   }
 
-  // Function to strip HTML tags and get plain text
   const stripHtmlTags = (html) => {
     if (!html) return '';
     const temp = document.createElement('div');
@@ -148,7 +136,6 @@ const OurProgramsSection = ({
     return temp.textContent || temp.innerText || '';
   };
 
-  // Function to truncate HTML content to ~9 lines
   const truncateHtml = (html, maxLines = 9) => {
     if (!html) return '';
 
@@ -167,14 +154,13 @@ const OurProgramsSection = ({
     return `<p class="font-400 text-[16px] sm:text-[18px] lg:text-[20px] text-[#524B48] leading-relaxed">${truncatedText}</p>`;
   };
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/600x400/009BE2/FFFFFF?text=Program';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
-  // Calculate container height based on number of programs
   const containerHeight = displayPrograms.length > 0 ? displayPrograms.length * 100 : 0;
 
   return (
@@ -182,7 +168,6 @@ const OurProgramsSection = ({
       id={sectionId}
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Header */}
       {showHeader && (
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 sm:pb-10 lg:pb-15 gap-5">
           {(hasTitle || hasDescription) && (
@@ -211,14 +196,11 @@ const OurProgramsSection = ({
         </div>
       )}
 
-      {/* Programs */}
       {hasPrograms && displayPrograms.length > 0 && (
         <>
           <div
             className={`relative ${showHeader ? "mt-16 sm:mt-24 lg:mt-32" : ""}`}
-            style={{
-              height: `${containerHeight}vh`,
-            }}
+            style={{ height: `${containerHeight}vh` }}
           >
             {displayPrograms.map((program, index) => {
               if (!hasValue(program) && !program.title && !program.description) {
@@ -241,16 +223,12 @@ const OurProgramsSection = ({
                       : "opacity-0 translate-y-16"
                     }
                   `}
-                  style={{
-                    // Higher index = higher z-index (later cards go on top)
-                    zIndex: index + 1,
-                  }}
+                  style={{ zIndex: index + 1 }}
                 >
                   <div
                     className="flex flex-col lg:flex-row justify-between items-center gap-8 lg:gap-25 p-5 sm:p-6 md:p-8 lg:p-25 rounded-3xl min-h-162.5 lg:h-187.5 shadow-lg"
                     style={{ backgroundColor: program.bg_color || '#ffffff' }}
                   >
-                    {/* Left Content */}
                     <div className="w-full lg:w-1/2 flex flex-col justify-center">
                       {hasValue(program.title) && (
                         <h3 className="bricolage-grotesque font-600 text-[24px] sm:text-[28px] md:text-[36px] lg:text-[46px] text-[#080C14] leading-tight mb-5">
@@ -276,12 +254,12 @@ const OurProgramsSection = ({
                       )}
                     </div>
 
-                    {/* Right Image */}
                     {hasValue(program.image) && (
                       <div className="w-full lg:w-1/2">
-                        <img
-                          src={getImageUrl(program.image)}
+                        <ImageWithFallback
+                          src={getImageSrc(program.image)}
                           alt={program.title || "Program image"}
+                          fallbackType="program"
                           className="w-full h-75 sm:h-100 lg:h-150 object-cover rounded-3xl hover:scale-105 transition-transform duration-300"
                         />
                       </div>

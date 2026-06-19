@@ -1,5 +1,7 @@
 // dus-frontend/src/Sections/OurActionSection/OurActionSection.jsx
 
+import ImageWithFallback from '../../Shared/ImageWithFallback';
+
 // Utility function to check if value exists
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
@@ -15,21 +17,20 @@ const OurActionSection = ({
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
   sectionId = 'our-action',
+  storageUrl = '',
 }) => {
-  // Early return if no data
   if (!hasValue(data)) return null;
 
   const { section = {}, actions = [] } = data;
 
-  // Early return if no content
   if (!hasValue(section.title) && !hasValue(section.description) && !hasValue(actions)) {
     return null;
   }
 
-  // Get image URL with fallback
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/60x60/009BE2/FFFFFF?text=Action';
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
+    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     return imagePath;
   };
 
@@ -38,7 +39,6 @@ const OurActionSection = ({
       id={sectionId}
       className={`mx-auto ${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
-      {/* Section Header */}
       {(section.title || section.description) && (
         <div className="text-center">
           {section.title && (
@@ -54,7 +54,6 @@ const OurActionSection = ({
         </div>
       )}
 
-      {/* Actions Grid */}
       {actions.length > 0 && (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-7.5 pt-8 sm:pt-10 lg:pt-12.5'>
           {actions.map((action) => (
@@ -63,9 +62,10 @@ const OurActionSection = ({
               className='bg-[#FAFAFA] hover:bg-white p-6 sm:p-8 md:p-10 lg:p-12.5 rounded-xl transition-all duration-300 hover:-translate-y-1 group cursor-pointer hover:shadow-[0_6px_12px_rgba(0,0,0,0.10)]'
             >
               {action.icon && (
-                <img
-                  src={getImageUrl(action.icon)}
+                <ImageWithFallback
+                  src={getImageSrc(action.icon)}
                   alt={action.alt || action.title || "Action icon"}
+                  fallbackType="action"
                   className='w-8 h-8 sm:w-10 sm:h-10 lg:w-12.5 lg:h-12.5 group-hover:scale-110 transition-transform duration-300 mb-3 sm:mb-4 lg:mb-5'
                 />
               )}
