@@ -118,7 +118,9 @@ const JobsSection = ({
   // Filter jobs based on selected type
   const filteredJobs = selectedFilter === "" || selectedFilter === "all"
     ? jobs
-    : jobs.filter(job => job.type?.toLowerCase().replace(" ", "-") === selectedFilter);
+    : jobs.filter(job =>
+      job.type?.toLowerCase().trim().replace(/\s+/g, "-") === selectedFilter
+    );
 
   // ============================================
   // RENDER
