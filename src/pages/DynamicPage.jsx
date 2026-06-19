@@ -74,7 +74,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     queryKey: ['sectionConfigs', pageSlug],
     queryFn: async () => {
       // Fetch ALL section configs and filter on client side
-      const response = await axiosPublic.get('/public/data/section_configs.json');
+      const response = await axiosPublic.get('section_configs.json');
       // Filter for the current page
       const filtered = response.data?.data?.filter(c => c.page_slug === pageSlug && c.is_enabled === 1) || [];
       return { data: filtered };
@@ -89,7 +89,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     isLoading: customLoading,
   } = useQuery({
     queryKey: ['customSectionData', pageSlug],
-    queryFn: () => axiosPublic.get('/public/data/custom_section_data.json').then(res => res.data),
+    queryFn: () => axiosPublic.get('custom_section_data.json').then(res => res.data),
     enabled: !!pageSlug
   });
 
@@ -114,7 +114,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     isLoading: sharedLoading,
   } = useQuery({
     queryKey: ['sharedData', [...neededTypes].sort().join(',')],
-    queryFn: () => axiosPublic.get('/public/data/shared_data.json').then(res => res.data),
+    queryFn: () => axiosPublic.get('shared_data.json').then(res => res.data),
     enabled: !!configsData && neededTypes.size > 0,
   });
 
@@ -125,7 +125,10 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     isLoading: programsLoading,
   } = useQuery({
     queryKey: ['programsData'],
-    queryFn: () => axiosPublic.get('/public/data/programs.json').then(res => res.data),
+    queryFn: async () => {
+      const response = await axiosPublic.get('programs.json');
+      return response.data;
+    },
     enabled: !!configsData,
   });
 
@@ -136,7 +139,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     isLoading: blogsLoading,
   } = useQuery({
     queryKey: ['blogsData'],
-    queryFn: () => axiosPublic.get('/public/data/blogs.json').then(res => res.data),
+    queryFn: () => axiosPublic.get('blogs.json').then(res => res.data),
     enabled: !!configsData,
   });
 
@@ -147,7 +150,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     isLoading: aboutContentLoading,
   } = useQuery({
     queryKey: ['aboutContentData'],
-    queryFn: () => axiosPublic.get('/public/data/about_content.json').then(res => res.data),
+    queryFn: () => axiosPublic.get('about_content.json').then(res => res.data),
     enabled: !!configsData,
   });
 
@@ -196,8 +199,13 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         data[section.section_key] = value;
       } else if (section.data_table === 'programs' && section.data_key) {
         // Programs data from programs.json
-        data[section.data_key] = programsData?.data || [];
-        data['programsData'] = programsData?.data || [];
+        const programsPayload = programsData?.data || programsData?.programs || [];
+        data[section.data_key] = {
+          section: programsData?.section || null,
+          programs: programsPayload,
+        };
+        data['programsData'] = programsPayload;
+        data['programsSection'] = programsData?.section || null;
       } else if (section.data_table === 'blogs' && section.data_key) {
         // Blogs data from blogs.json
         const blogList = blogsData?.data || [];
@@ -215,6 +223,9 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     // Always pass programsData for details pages
     if (programsData?.data) {
       data.programsData = programsData.data;
+    }
+    if (programsData?.section) {
+      data.programsSection = programsData.section;
     }
 
     // Always pass blogsData for details pages
@@ -296,6 +307,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         {seoHelmet}
         {React.cloneElement(children, {
           programsData: pageData.programsData || [],
+          programsSection: pageData.programsSection || null,
           blogsData: pageData.blogsData || [],
           sectionConfigs: pageConfigs,
           pageData: pageData,
@@ -345,6 +357,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
             sharedData: parsedShared,
             pageSlug,
             programsData: pageData.programsData || [],
+            programsSection: pageData.programsSection || null,
             blogsData: pageData.blogsData || [],
           }}
         />

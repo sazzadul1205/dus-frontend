@@ -100,7 +100,7 @@ const usePageData = () => {
   const axiosPublic = useAxiosPublic();
   return useQuery({
     queryKey: ['pageData'],
-    queryFn: () => axiosPublic.get('/public/data/pages.json').then(res => res.data),
+    queryFn: () => axiosPublic.get('pages.json').then(res => res.data),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 2, // Retry twice on failure
   });
