@@ -9,29 +9,19 @@
  * - Provides fallback image URLs for when images fail to load
  * - Centralizes image URL validation and resolution logic
  * - Used by ImageWithFallback component
- *
- * FALLBACK IMAGES:
- * Each fallback is a placeholder with a specific size and text
- * Color scheme: Brand blue (#009BE2) with white text
- *
- * USAGE:
- * import { getFallbackUrl, getImageUrl } from './imageConstants';
- *
- * const fallbackUrl = getFallbackUrl('banner');
- * const resolvedUrl = getImageUrl('/images/photo.jpg', 'blog', storageUrl);
+ * - Handles Laravel /asset/ paths
  *
  * ============================================
  */
+
+// Get the base URL for assets from environment
+const ASSET_BASE_URL =
+  import.meta.env.VITE_ASSET_URL || "http://localhost:8000/asset/";
 
 /**
  * FALLBACK IMAGES MAP
  * Key: Type of image
  * Value: URL to fallback image
- *
- * Each fallback is a placeholder from placehold.co with:
- * - Width x Height
- * - Background color (brand blue or dark)
- * - Text describing the image type
  */
 export const FALLBACK_IMAGES = {
   default:
@@ -56,13 +46,6 @@ export const FALLBACK_IMAGES = {
 
 /**
  * Get fallback URL by type
- *
- * @param {string} type - Key from FALLBACK_IMAGES (default: 'default')
- * @returns {string} Fallback image URL
- *
- * @example
- * getFallbackUrl('banner') // Returns banner placeholder
- * getFallbackUrl() // Returns default placeholder
  */
 export const getFallbackUrl = (type = "default") => {
   return FALLBACK_IMAGES[type] || FALLBACK_IMAGES.default;
@@ -70,20 +53,6 @@ export const getFallbackUrl = (type = "default") => {
 
 /**
  * Check if a URL is valid for use as an image src
- *
- * Valid URL patterns:
- * - http:// or https:// (absolute URLs)
- * - / (relative URLs)
- * - data: (data URIs)
- * - blob: (blob URLs)
- *
- * @param {string} url - URL to validate
- * @returns {boolean} True if URL is valid
- *
- * @example
- * isValidImageUrl('https://example.com/photo.jpg') // true
- * isValidImageUrl('/images/photo.jpg') // true
- * isValidImageUrl('') // false
  */
 export const isValidImageUrl = (url) => {
   if (!url) return false;
@@ -99,25 +68,13 @@ export const isValidImageUrl = (url) => {
 };
 
 /**
- * Get image URL with fallback
- *
- * Resolves a URL by:
- * 1. If URL is empty → return fallback
- * 2. If URL is absolute (http, data, blob) → return as-is
- * 3. If URL is relative → prepend storageUrl
- * 4. Otherwise → return fallback
- *
- * @param {string} url - Original URL
- * @param {string} fallbackType - Type of fallback to use (default: 'default')
- * @param {string} storageUrl - Base storage URL for relative paths
- * @returns {string} Resolved URL with fallback
- *
- * @example
- * getImageUrl('', 'banner') // Returns banner fallback
- * getImageUrl('https://example.com/photo.jpg', 'blog') // Returns same URL
- * getImageUrl('/images/photo.jpg', 'blog', 'https://storage.com') // Returns 'https://storage.com/images/photo.jpg'
+ * Get image URL with fallback - Handles Laravel /asset/ paths
  */
-export const getImageUrl = (url, fallbackType = "default", storageUrl = "") => {
+export const getImageUrl = (
+  url,
+  fallbackType = "default",
+  baseUrl = ASSET_BASE_URL,
+) => {
   // Empty URL → fallback
   if (!url) {
     return getFallbackUrl(fallbackType);
@@ -132,11 +89,36 @@ export const getImageUrl = (url, fallbackType = "default", storageUrl = "") => {
     return url;
   }
 
-  // Relative URLs → prepend storage URL
-  if (storageUrl) {
-    return `${storageUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+  // Handle /storage/ paths → convert to /asset/
+  if (url.startsWith("/storage/")) {
+    const cleanPath = url.replace(/^\/storage\//, "");
+    return `${baseUrl}${cleanPath}`;
   }
 
-  // Fallback to original if nothing else works
-  return url;
+  // Handle /asset/ paths (already correct)
+  if (url.startsWith("/asset/")) {
+    const cleanPath = url.replace(/^\/asset\//, "");
+    return `${baseUrl}${cleanPath}`;
+  }
+
+  // Handle paths that start with / (but not /asset/ or /storage/)
+  if (url.startsWith("/")) {
+    const cleanPath = url.replace(/^\//, "");
+    return `${baseUrl}${cleanPath}`;
+  }
+
+  // Handle paths in format "FolderName/filename.ext"
+  // e.g., "AboutUs/8235fc0d0e2c3082be7cb9ba5d6f5502a121d0ff.webp"
+  if (url.includes("/") && !url.startsWith("http")) {
+    return `${baseUrl}${url}`;
+  }
+
+  // Handle filenames (like from /images/)
+  // e.g., "Icon.svg", "Icon-bottom.svg"
+  if (!url.includes("/")) {
+    return `${baseUrl}images/${url}`;
+  }
+
+  // Default: prepend base URL
+  return `${baseUrl}${url}`;
 };
