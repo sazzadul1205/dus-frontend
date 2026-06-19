@@ -1,0 +1,54 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # ============================================
+  # MAINTENANCE MODE - Uncomment to activate
+  # ============================================
+  # RewriteCond %{REQUEST_URI} !^/maintenance\.html$
+  # RewriteCond %{REQUEST_URI} !^/assets/ # Exclude assets if needed
+  # RewriteRule ^ /maintenance.html [L,R=307]
+
+  # Serve existing files and folders directly.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Fallback for client-side routing.
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Basic security headers.
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Optional: Add maintenance mode header for monitoring
+  # Header set X-Maintenance-Mode "active" env=MAINTENANCE
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+  ExpiresByType font/woff2 "access plus 1 month"
+</IfModule>
+
+# ============================================
+# ALTERNATIVE MAINTENANCE METHOD (Dynamic)
+# Uncomment this section instead if you prefer
+# to use an environment variable or file check
+# ============================================
+# <IfModule mod_rewrite.c>
+#   # Check if maintenance file exists
+#   RewriteCond %{DOCUMENT_ROOT}/maintenance.enable -f
+#   # Don't redirect maintenance page itself or assets
+#   RewriteCond %{REQUEST_URI} !^/maintenance\.html$
+#   RewriteCond %{REQUEST_URI} !\.(css|js|png|jpg|jpeg|gif|ico|svg|webp|woff2)$
+#   # Redirect everything else to maintenance
+#   RewriteRule ^ /maintenance.html [L,R=307]
+# </IfModule>
