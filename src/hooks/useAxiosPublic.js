@@ -14,7 +14,8 @@
  * const axiosPublic = useAxiosPublic();
  * const response = await axiosPublic.get('pages.json');
  *
- * BASE URL: http://localhost:5174/public/data/
+ * BASE URL: Configured via .env file (VITE_PUBLIC_API_URL)
+ * Default: http://localhost:5174/data/
  *
  * DATA FILES AVAILABLE:
  * - pages.json - Page configurations
@@ -29,6 +30,7 @@
  * - This is a simple wrapper around axios.create()
  * - No interceptors or authentication logic needed
  * - For authenticated API calls, use useAxiosSecure instead
+ * - Environment variables must be prefixed with VITE_ for client-side access
  *
  * ============================================
  */
@@ -43,7 +45,8 @@ import axios from "axios";
  */
 export default () => {
   const axiosPublic = axios.create({
-    baseURL: "http://localhost:5174/public/data/",
+    baseURL:
+      import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:5174/data/",
   });
   return axiosPublic;
 };

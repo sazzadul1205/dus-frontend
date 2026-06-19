@@ -335,7 +335,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
   } = useQuery({
     queryKey: ['jobsData'],
     queryFn: () => axiosPublic.get('jobs.json').then(res => res.data),
-    enabled: !!configsData && pageConfigs.some(section => section.data_table === 'jobs' && section.data_key),
+    enabled: !!configsData?.data && configsData.data.some(section => section.data_table === 'jobs' && section.data_key),
   });
 
   // ============================================

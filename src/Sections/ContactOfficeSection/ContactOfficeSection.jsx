@@ -136,7 +136,7 @@ const ContactOfficeSection = ({
                   className="w-12 h-12 object-contain"
                 />
               ) : (
-                <FaGraduationCap className="text-4xl text-[#009BE2]" />
+                <FaGraduationCap className="text-4xl text-sblack" />
               )}
 
               {/* Office Title */}
