@@ -10,10 +10,11 @@
  * - Supports dropdown menus for nested navigation
  * - Responsive: Desktop horizontal, Mobile hamburger menu
  * - Active link highlighting based on current route
+ * - Logo: 73×106px (width × height) - fixed, no floating
  * 
  * DATA STRUCTURE:
  * {
- *   logo: { src, alt, className, href },
+ *   logo: { src, alt, className, href, width, height },
  *   navLinks: [{ name, href, dropdown: [{ name, href }] }],
  *   button: { text, href, className },
  *   mobileMenu: { className },
@@ -25,6 +26,7 @@
  * - Dropdown menus with chevron animation
  * - Mobile hamburger menu with slide animation
  * - ImageWithFallback for logo
+ * - Fixed logo dimensions: 73×106px
  * 
  * ============================================
  */
@@ -57,13 +59,16 @@ const hasValue = (value) => {
  * 
  * @returns {JSX.Element} Rendered navigation bar
  */
-const Navbar = ({ navbarData, storageUrl = '' }) => {
+const Navbar = ({
+  navbarData,
+  storageUrl = '',
+}) => {
   // ============================================
   // STATE
   // ============================================
-  const [isOpen, setIsOpen] = useState(false);           // Mobile menu open/close
-  const [openDropdowns, setOpenDropdowns] = useState({}); // Desktop dropdown state
-  const [mobileDropdownOpen, setMobileDropdownOpen] = useState({}); // Mobile dropdown state
+  const [isOpen, setIsOpen] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState({});
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState({});
 
   // ============================================
   // ROUTE DETECTION
@@ -71,11 +76,6 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  /**
-   * Check if a link is active
-   * - For home ('/'): exact match
-   * - For other links: starts with the href
-   */
   const isActive = (href) => {
     if (!hasValue(href)) return false;
     if (href === '/') {
@@ -121,20 +121,19 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
   const hasNavLinks = hasValue(navLinks);
   const hasButton = hasValue(button.text) && hasValue(button.href);
 
-  // If no content, don't render
   if (!hasLogo && !hasNavLinks && !hasButton) return null;
 
   // ============================================
   // HELPERS
   // ============================================
-
-  /**
-   * Build image URL with storage path
-   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    if (storageUrl) return `${storageUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    if (imagePath.startsWith('/asset/')) return imagePath;
+    if (storageUrl) {
+      const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+      return `${storageUrl}${cleanPath}`;
+    }
     return imagePath;
   };
 
@@ -143,51 +142,62 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
   // ============================================
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-20">
-      <div className="mx-auto px-5 md:px-20 py-3">
-        <div className="flex justify-between items-center h-20">
+      <div className="mx-auto px-5 md:px-20 py-5">
+        <div className="flex justify-between items-center">
 
           {/* ============================================
-              LOGO
+              LOGO - Fixed dimensions 73×106px (no floating)
               ============================================ */}
-          {hasLogo && (
-            <Link to={logo.href || '/'} className="flex items-center space-x-2 group">
-              <ImageWithFallback
-                src={getImageSrc(logo.src)}
-                alt={logo.alt || 'Logo'}
-                fallbackType="logo"
-                className={logo.className || 'h-10 w-auto'}
-              />
-            </Link>
-          )}
+          <div className="shrink-0">
+            {hasLogo && (
+              <Link to={logo.href || '/'} className="block">
+                <ImageWithFallback
+                  src={getImageSrc(logo.src)}
+                  alt={logo.alt || 'Logo'}
+                  fallbackType="logo"
+                  className={logo.className || 'block'}
+                  imgProps={{
+                    width: logo.width || 73,
+                    height: logo.height || 106,
+                    style: {
+                      width: '73px',
+                      height: '106px',
+                      objectFit: 'contain',
+                      display: 'block',
+                      ...(logo.style || {})
+                    }
+                  }}
+                />
+              </Link>
+            )}
+          </div>
 
           {/* ============================================
               RIGHT SIDE - Nav Links + CTA + Hamburger
               ============================================ */}
-          <div className='flex items-center space-x-8'>
+          <div className="flex items-center gap-6 lg:gap-8">
 
             {/* DESKTOP NAVIGATION */}
             {hasNavLinks && (
-              <ul className="hidden lg:flex items-center space-x-8">
+              <ul className="hidden lg:flex items-center gap-6 xl:gap-8">
                 {navLinks.map((link, index) => {
                   const active = isActive(link.href);
                   const hasDropdown = hasValue(link.dropdown) || hasValue(dropdowns[index]);
 
                   return (
-                    <li key={link.name || index} className="relative group">
+                    <li key={link.name || index} className="relative">
                       {hasDropdown ? (
-                        // Dropdown Link
                         <div>
                           <button
                             onClick={() => toggleDropdown(index)}
-                            className={`relative font-medium transition-all duration-300 flex items-center gap-1 ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
+                            className={`relative font-medium transition-all duration-300 flex items-center gap-1 whitespace-nowrap ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
                               }`}
                           >
                             {link.name}
-                            <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${openDropdowns[index] ? 'rotate-180' : ''
+                            <FaChevronDown className={`w-3 h-3 transition-transform duration-300 ${openDropdowns[index] ? 'rotate-180' : ''
                               }`} />
                           </button>
 
-                          {/* Dropdown Menu */}
                           {openDropdowns[index] && (
                             <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                               {(link.dropdown || dropdowns[index] || []).map((dropdownItem, idx) => (
@@ -204,15 +214,14 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                           )}
                         </div>
                       ) : (
-                        // Regular Link with underline animation
                         <Link
                           to={link.href}
-                          className={`relative font-medium transition-all duration-300 group ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
+                          className={`relative font-medium transition-all duration-300 group whitespace-nowrap ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
                             }`}
                         >
                           {link.name}
                           <span
-                            className={`absolute bottom-0 left-0 h-0.5 bg-[#009BE2] transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full group-hover:right-0 group-hover:left-auto'
+                            className={`absolute bottom-0 left-0 h-0.5 bg-[#009BE2] transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full'
                               }`}
                           />
                         </Link>
@@ -227,7 +236,7 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
             {hasButton && (
               <Link
                 to={button.href}
-                className={`hidden lg:inline-block ${button.className || 'capitalize text-white bg-[#009BE2] hover:bg-[#009BE2]/80 px-6 py-2 rounded-lg transition-colors duration-200'
+                className={`hidden lg:inline-block ${button.className || 'capitalize text-white bg-[#009BE2] hover:bg-[#009BE2]/80 px-6 py-2 rounded-lg transition-colors duration-200 whitespace-nowrap'
                   }`}
               >
                 {button.text}
@@ -237,7 +246,7 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
             {/* HAMBURGER MENU BUTTON - Mobile */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={mobileMenu.className || "md:hidden text-gray-700 hover:text-blue-600 focus:outline-none"}
+              className={mobileMenu.className || "lg:hidden text-gray-700 hover:text-blue-600 focus:outline-none p-2"}
               aria-label="Toggle menu"
             >
               {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -250,9 +259,9 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
             ============================================ */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden
-            ${isOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
+            ${isOpen ? 'max-h-screen opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
         >
-          <ul className="flex flex-col space-y-4 pb-4">
+          <ul className="flex flex-col space-y-3 pb-4">
             {hasNavLinks && navLinks.map((link, index) => {
               const active = isActive(link.href);
               const hasDropdown = hasValue(link.dropdown) || hasValue(dropdowns[index]);
@@ -260,7 +269,6 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
               return (
                 <li key={link.name || index}>
                   {hasDropdown ? (
-                    // Mobile Dropdown
                     <div>
                       <button
                         onClick={() => toggleMobileDropdown(index)}
@@ -290,7 +298,6 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                       )}
                     </div>
                   ) : (
-                    // Mobile Regular Link
                     <Link
                       to={link.href}
                       className={`block font-medium transition-colors duration-200 py-2 ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
