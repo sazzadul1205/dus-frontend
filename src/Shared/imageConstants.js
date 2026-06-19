@@ -1,5 +1,38 @@
 // dus-frontend/src/Shared/imageConstants.js
 
+/**
+ * ============================================
+ * IMAGE CONSTANTS - Fallback Images & Utilities
+ * ============================================
+ *
+ * PURPOSE:
+ * - Provides fallback image URLs for when images fail to load
+ * - Centralizes image URL validation and resolution logic
+ * - Used by ImageWithFallback component
+ *
+ * FALLBACK IMAGES:
+ * Each fallback is a placeholder with a specific size and text
+ * Color scheme: Brand blue (#009BE2) with white text
+ *
+ * USAGE:
+ * import { getFallbackUrl, getImageUrl } from './imageConstants';
+ *
+ * const fallbackUrl = getFallbackUrl('banner');
+ * const resolvedUrl = getImageUrl('/images/photo.jpg', 'blog', storageUrl);
+ *
+ * ============================================
+ */
+
+/**
+ * FALLBACK IMAGES MAP
+ * Key: Type of image
+ * Value: URL to fallback image
+ *
+ * Each fallback is a placeholder from placehold.co with:
+ * - Width x Height
+ * - Background color (brand blue or dark)
+ * - Text describing the image type
+ */
 export const FALLBACK_IMAGES = {
   default:
     "https://placehold.co/800x600/009BE2/FFFFFF?text=Image+Not+Available",
@@ -23,8 +56,13 @@ export const FALLBACK_IMAGES = {
 
 /**
  * Get fallback URL by type
- * @param {string} type - Key from FALLBACK_IMAGES
+ *
+ * @param {string} type - Key from FALLBACK_IMAGES (default: 'default')
  * @returns {string} Fallback image URL
+ *
+ * @example
+ * getFallbackUrl('banner') // Returns banner placeholder
+ * getFallbackUrl() // Returns default placeholder
  */
 export const getFallbackUrl = (type = "default") => {
   return FALLBACK_IMAGES[type] || FALLBACK_IMAGES.default;
@@ -32,14 +70,25 @@ export const getFallbackUrl = (type = "default") => {
 
 /**
  * Check if a URL is valid for use as an image src
+ *
+ * Valid URL patterns:
+ * - http:// or https:// (absolute URLs)
+ * - / (relative URLs)
+ * - data: (data URIs)
+ * - blob: (blob URLs)
+ *
  * @param {string} url - URL to validate
  * @returns {boolean} True if URL is valid
+ *
+ * @example
+ * isValidImageUrl('https://example.com/photo.jpg') // true
+ * isValidImageUrl('/images/photo.jpg') // true
+ * isValidImageUrl('') // false
  */
 export const isValidImageUrl = (url) => {
   if (!url) return false;
   if (typeof url !== "string") return false;
 
-  // Check for common image URL patterns
   const trimmedUrl = url.trim();
   if (trimmedUrl.startsWith("http")) return true;
   if (trimmedUrl.startsWith("/")) return true;
@@ -51,17 +100,30 @@ export const isValidImageUrl = (url) => {
 
 /**
  * Get image URL with fallback
+ *
+ * Resolves a URL by:
+ * 1. If URL is empty → return fallback
+ * 2. If URL is absolute (http, data, blob) → return as-is
+ * 3. If URL is relative → prepend storageUrl
+ * 4. Otherwise → return fallback
+ *
  * @param {string} url - Original URL
- * @param {string} fallbackType - Type of fallback to use
- * @param {string} storageUrl - Base storage URL (for relative paths)
+ * @param {string} fallbackType - Type of fallback to use (default: 'default')
+ * @param {string} storageUrl - Base storage URL for relative paths
  * @returns {string} Resolved URL with fallback
+ *
+ * @example
+ * getImageUrl('', 'banner') // Returns banner fallback
+ * getImageUrl('https://example.com/photo.jpg', 'blog') // Returns same URL
+ * getImageUrl('/images/photo.jpg', 'blog', 'https://storage.com') // Returns 'https://storage.com/images/photo.jpg'
  */
 export const getImageUrl = (url, fallbackType = "default", storageUrl = "") => {
+  // Empty URL → fallback
   if (!url) {
     return getFallbackUrl(fallbackType);
   }
 
-  // If URL is already absolute, return it
+  // Absolute URLs → return as-is
   if (
     url.startsWith("http") ||
     url.startsWith("data:") ||
@@ -70,10 +132,11 @@ export const getImageUrl = (url, fallbackType = "default", storageUrl = "") => {
     return url;
   }
 
-  // If URL is relative, prepend storage URL
+  // Relative URLs → prepend storage URL
   if (storageUrl) {
     return `${storageUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   }
 
+  // Fallback to original if nothing else works
   return url;
 };

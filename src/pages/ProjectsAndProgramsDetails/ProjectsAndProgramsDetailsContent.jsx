@@ -1,15 +1,64 @@
 // dus-frontend/src/pages/ProjectsAndProgramsDetails/ProjectsAndProgramsDetailsContent.jsx
 
-// Dynamic Section Renderer
+/**
+ * ============================================
+ * PROJECTS & PROGRAMS DETAILS CONTENT - Program Renderer
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Finds and renders a single program
+ * - Renders program banner with title
+ * - Renders program content with image and rich text
+ * 
+ * DATA SOURCE:
+ * - programs.json from the API
+ * - Each program has: slug, title, content, full_content_html, image, bg_color
+ * 
+ * COMPONENT STRUCTURE:
+ * 1. PageBannerSection - Hero banner with program title
+ * 2. ProgramContentSection - Main content with title, image, rich text
+ * 3. Other dynamic sections (e.g., ProgramImpactSection, FAQ)
+ * 
+ * DATA FLOW:
+ * 1. Receives programsData (all programs) and slug from parent
+ * 2. Finds the specific program by slug
+ * 3. Renders sections with the program data
+ * 
+ * ============================================
+ */
+
+// Shared
+import ImageWithFallback from '../../Shared/ImageWithFallback';
 import DynamicSectionRenderer from '../../Shared/DynamicSectionRenderer';
 
 // Utility
 import { createSanitizedHTML } from '../../utils/sanitize';
-import ImageWithFallback from '../../Shared/ImageWithFallback';
 
+// ============================================
+// INTERNAL COMPONENTS
+// ============================================
+
+/**
+ * ProgramContentSection - Renders program content
+ * 
+ * Displays:
+ * - Title
+ * - Image (with fallback)
+ * - Rich text content
+ * 
+ * @param {Object} props
+ * @param {Object} props.programData - Program data
+ * @param {string} props.bgColor - Background color
+ * @param {string} props.paddingY - Vertical padding
+ * @param {string} props.paddingX - Horizontal padding
+ * @param {string} props.sectionClassName - Additional CSS classes
+ * @param {string} props.sectionId - Section ID for anchors
+ * @param {string} props.storageUrl - Image storage base URL
+ */
 const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, sectionClassName, sectionId, storageUrl = '' }) => {
   if (!programData) return null;
 
+  // Get content - supports multiple field names
   const content = programData.full_content_html ||
     programData.full_content ||
     programData.content ||
@@ -18,12 +67,17 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
   const title = programData.title || '';
   const image = programData.image || '';
 
+  // Don't render if no title or content
   if (!title && !content) return null;
 
+  // Apply defaults if not provided
   const finalBgColor = bgColor || 'bg-white';
   const finalPaddingY = paddingY || 'py-10 sm:py-15 md:py-20 lg:py-25';
   const finalPaddingX = paddingX || 'px-5 sm:px-10 md:px-20 lg:px-50';
 
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -33,12 +87,14 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
 
   return (
     <section id={sectionId} className={`${finalBgColor} ${finalPaddingY} ${finalPaddingX} ${sectionClassName || ''}`}>
+      {/* Title */}
       {title && (
         <h1 className='font-700 text-[28px] sm:text-[36px] md:text-[48px] lg:text-[64px] xl:text-[80px] leading-tight pb-12.5'>
           {title}
         </h1>
       )}
 
+      {/* Image */}
       {image && (
         <div className="mb-6 sm:mb-8 md:mb-10 lg:mb-12.5">
           <ImageWithFallback
@@ -50,6 +106,7 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
         </div>
       )}
 
+      {/* Rich Text Content (sanitized) */}
       {content && (
         <div
           className="bricolage-grotesque prose prose-lg max-w-none
@@ -67,6 +124,23 @@ const ProgramContentSection = ({ programData, bgColor, paddingY, paddingX, secti
   );
 };
 
+// ============================================
+// MAIN EXPORT
+// ============================================
+
+/**
+ * ProjectsAndProgramsDetailsContent - Main program details renderer
+ * 
+ * @param {Object} props
+ * @param {Array} props.sectionConfigs - Section configurations
+ * @param {string} props.storageUrl - Image storage base URL
+ * @param {Object} props.programData - Program data (passed from parent)
+ * @param {Array} props.programsData - All programs
+ * @param {Object} props.pageData - Page data from DynamicPage
+ * @param {string} props.slug - Program slug from URL
+ * 
+ * @returns {JSX.Element} Rendered program content
+ */
 export default function ProjectsAndProgramsDetailsContent({
   sectionConfigs,
   storageUrl,
@@ -75,8 +149,12 @@ export default function ProjectsAndProgramsDetailsContent({
   pageData = {},
   slug,
 }) {
+  // Find the specific program by slug
   const programData = propProgramData || programsData?.find(item => item.slug === slug);
 
+  // ============================================
+  // SECTION FILTERING
+  // ============================================
   const allSections = (sectionConfigs || [])
     .filter(section => section.is_enabled === 1);
 
@@ -87,8 +165,12 @@ export default function ProjectsAndProgramsDetailsContent({
   const bannerSection = dynamicSections.find(s => s.component === 'PageBannerSection');
   const otherDynamicSections = dynamicSections.filter(s => s.component !== 'PageBannerSection');
 
+  // ============================================
+  // MERGE PAGE DATA
+  // ============================================
   let mergedPageData = { ...pageData };
 
+  // Update banner title with program title
   if (mergedPageData.bannerData && programData) {
     mergedPageData.bannerData = {
       ...mergedPageData.bannerData,
@@ -108,8 +190,12 @@ export default function ProjectsAndProgramsDetailsContent({
     programsData: programsData,
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <>
+      {/* Banner Section - Dynamic section */}
       {bannerSection && (
         <DynamicSectionRenderer
           key={bannerSection.id}
@@ -119,8 +205,10 @@ export default function ProjectsAndProgramsDetailsContent({
         />
       )}
 
+      {/* Fixed Sections - Rendered by this component */}
       {fixedSections.map((section) => {
         if (section.component === 'ProgramContentSection') {
+          // Parse custom props from section config
           let customProps = {};
           if (section.custom_props) {
             try {
@@ -145,6 +233,7 @@ export default function ProjectsAndProgramsDetailsContent({
         return null;
       })}
 
+      {/* Other Dynamic Sections */}
       {otherDynamicSections.map((section) => (
         <DynamicSectionRenderer
           key={section.id}

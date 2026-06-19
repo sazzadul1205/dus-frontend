@@ -1,5 +1,38 @@
 // dus-frontend/src/Shared/ArrowIcon.jsx
 
+/**
+ * ============================================
+ * ARROW ICON - Reusable SVG Arrow Component
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Provides a consistent arrow icon across the application
+ * - Used in buttons, links, and navigation elements
+ * - Supports custom styling via className and props
+ * 
+ * USAGE:
+ * <ArrowIcon className="w-5 h-5 text-blue-500" />
+ * <ArrowIcon width={24} height={24} color="#009BE2" />
+ * 
+ * COMMON USE CASES:
+ * - "Read More" links (BlogSection, StoriesSection)
+ * - "Apply Now" buttons (JobsSection)
+ * - Navigation arrows (Navbar dropdowns)
+ * - CTA buttons (HomeBanner, LegalSection)
+ * 
+ * STYLING:
+ * - Default size: 20x20 pixels
+ * - Color: currentColor (inherits from parent text color)
+ * - Animation: group-hover translate is applied in parent components
+ * 
+ * SVG PATH:
+ * - Arrow pointing up-right (diagonal)
+ * - Creates a dynamic, modern look
+ * - Clean vector path with even-odd fill rule
+ * 
+ * ============================================
+ */
+
 const ArrowIcon = ({
   className = '',
   width = 20,
@@ -16,11 +49,25 @@ const ArrowIcon = ({
     className={className}
     {...restProps}
   >
+    {/* SVG Defs - Clip path for proper rendering */}
+    <defs>
+      <clipPath id="clip0_96_3528">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
+
     <g clipPath="url(#clip0_96_3528)">
+      {/* Mask for the arrow shape */}
       <mask id="mask0_96_3528" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
         <path d="M20 0H0V20H20V0Z" fill="white" />
       </mask>
+
       <g mask="url(#mask0_96_3528)">
+        {/* 
+          Arrow Path - Points up-right
+          Creates a diagonal arrow effect
+          Even-odd fill rule for clean rendering
+        */}
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -29,11 +76,6 @@ const ArrowIcon = ({
         />
       </g>
     </g>
-    <defs>
-      <clipPath id="clip0_96_3528">
-        <rect width="20" height="20" fill="white" />
-      </clipPath>
-    </defs>
   </svg>
 );
 

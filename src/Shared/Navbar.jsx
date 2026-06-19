@@ -1,16 +1,45 @@
 // dus-frontend/src/Shared/Navbar.jsx
 
-// React
+/**
+ * ============================================
+ * NAVBAR - Main Navigation Component
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Renders the main navigation bar with logo, links, and CTA
+ * - Supports dropdown menus for nested navigation
+ * - Responsive: Desktop horizontal, Mobile hamburger menu
+ * - Active link highlighting based on current route
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   logo: { src, alt, className, href },
+ *   navLinks: [{ name, href, dropdown: [{ name, href }] }],
+ *   button: { text, href, className },
+ *   mobileMenu: { className },
+ *   dropdowns: [[{ name, href }]] // Optional: dropdowns separate from navLinks
+ * }
+ * 
+ * FEATURES:
+ * - Active route detection with underline indicator
+ * - Dropdown menus with chevron animation
+ * - Mobile hamburger menu with slide animation
+ * - ImageWithFallback for logo
+ * 
+ * ============================================
+ */
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-// Icons
+// Icons for hamburger menu and dropdown chevrons
 import { FaBars, FaTimes, FaChevronDown } from 'react-icons/fa';
 
-// Image Component with Fallback
 import ImageWithFallback from './ImageWithFallback';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -19,14 +48,34 @@ const hasValue = (value) => {
   return true;
 };
 
+/**
+ * Navbar Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.navbarData - Navigation configuration data
+ * @param {string} props.storageUrl - Base URL for image storage
+ * 
+ * @returns {JSX.Element} Rendered navigation bar
+ */
 const Navbar = ({ navbarData, storageUrl = '' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [openDropdowns, setOpenDropdowns] = useState({});
-  const [mobileDropdownOpen, setMobileDropdownOpen] = useState({});
+  // ============================================
+  // STATE
+  // ============================================
+  const [isOpen, setIsOpen] = useState(false);           // Mobile menu open/close
+  const [openDropdowns, setOpenDropdowns] = useState({}); // Desktop dropdown state
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState({}); // Mobile dropdown state
 
+  // ============================================
+  // ROUTE DETECTION
+  // ============================================
   const location = useLocation();
   const currentPath = location.pathname;
 
+  /**
+   * Check if a link is active
+   * - For home ('/'): exact match
+   * - For other links: starts with the href
+   */
   const isActive = (href) => {
     if (!hasValue(href)) return false;
     if (href === '/') {
@@ -35,6 +84,9 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
     return currentPath.startsWith(href);
   };
 
+  // ============================================
+  // DROPDOWN TOGGLES
+  // ============================================
   const toggleDropdown = (index) => {
     setOpenDropdowns(prev => ({
       ...prev,
@@ -49,8 +101,14 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
     }));
   };
 
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(navbarData)) return null;
 
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const {
     logo = {},
     navLinks = [],
@@ -63,8 +121,16 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
   const hasNavLinks = hasValue(navLinks);
   const hasButton = hasValue(button.text) && hasValue(button.href);
 
+  // If no content, don't render
   if (!hasLogo && !hasNavLinks && !hasButton) return null;
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -72,11 +138,17 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
     return imagePath;
   };
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-20">
       <div className="mx-auto px-5 md:px-20 py-3">
         <div className="flex justify-between items-center h-20">
 
+          {/* ============================================
+              LOGO
+              ============================================ */}
           {hasLogo && (
             <Link to={logo.href || '/'} className="flex items-center space-x-2 group">
               <ImageWithFallback
@@ -88,8 +160,12 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
             </Link>
           )}
 
+          {/* ============================================
+              RIGHT SIDE - Nav Links + CTA + Hamburger
+              ============================================ */}
           <div className='flex items-center space-x-8'>
 
+            {/* DESKTOP NAVIGATION */}
             {hasNavLinks && (
               <ul className="hidden lg:flex items-center space-x-8">
                 {navLinks.map((link, index) => {
@@ -99,18 +175,19 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                   return (
                     <li key={link.name || index} className="relative group">
                       {hasDropdown ? (
+                        // Dropdown Link
                         <div>
                           <button
                             onClick={() => toggleDropdown(index)}
-                            className={`relative font-medium transition-all duration-300 flex items-center gap-1 ${active
-                              ? 'text-[#009BE2]'
-                              : 'text-black hover:text-[#009BE2]'
+                            className={`relative font-medium transition-all duration-300 flex items-center gap-1 ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
                               }`}
                           >
                             {link.name}
-                            <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${openDropdowns[index] ? 'rotate-180' : ''}`} />
+                            <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${openDropdowns[index] ? 'rotate-180' : ''
+                              }`} />
                           </button>
 
+                          {/* Dropdown Menu */}
                           {openDropdowns[index] && (
                             <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                               {(link.dropdown || dropdowns[index] || []).map((dropdownItem, idx) => (
@@ -127,20 +204,17 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                           )}
                         </div>
                       ) : (
+                        // Regular Link with underline animation
                         <Link
                           to={link.href}
-                          className={`relative font-medium transition-all duration-300 group ${active
-                            ? 'text-[#009BE2]'
-                            : 'text-black hover:text-[#009BE2]'
+                          className={`relative font-medium transition-all duration-300 group ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
                             }`}
                         >
                           {link.name}
                           <span
-                            className={`absolute bottom-0 left-0 h-0.5 bg-[#009BE2] transition-all duration-300 ${active
-                              ? 'w-full'
-                              : 'w-0 group-hover:w-full group-hover:right-0 group-hover:left-auto'
+                            className={`absolute bottom-0 left-0 h-0.5 bg-[#009BE2] transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full group-hover:right-0 group-hover:left-auto'
                               }`}
-                          ></span>
+                          />
                         </Link>
                       )}
                     </li>
@@ -149,15 +223,18 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
               </ul>
             )}
 
+            {/* CTA BUTTON */}
             {hasButton && (
               <Link
                 to={button.href}
-                className={`hidden lg:inline-block ${button.className || 'capitalize text-white bg-[#009BE2] hover:bg-[#009BE2]/80 px-6 py-2 rounded-lg transition-colors duration-200'}`}
+                className={`hidden lg:inline-block ${button.className || 'capitalize text-white bg-[#009BE2] hover:bg-[#009BE2]/80 px-6 py-2 rounded-lg transition-colors duration-200'
+                  }`}
               >
                 {button.text}
               </Link>
             )}
 
+            {/* HAMBURGER MENU BUTTON - Mobile */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={mobileMenu.className || "md:hidden text-gray-700 hover:text-blue-600 focus:outline-none"}
@@ -168,6 +245,9 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
           </div>
         </div>
 
+        {/* ============================================
+            MOBILE MENU - Slide Down
+            ============================================ */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden
             ${isOpen ? 'max-h-125 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
@@ -180,6 +260,7 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
               return (
                 <li key={link.name || index}>
                   {hasDropdown ? (
+                    // Mobile Dropdown
                     <div>
                       <button
                         onClick={() => toggleMobileDropdown(index)}
@@ -187,7 +268,8 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                           }`}
                       >
                         <span>{link.name}</span>
-                        <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${mobileDropdownOpen[index] ? 'rotate-180' : ''}`} />
+                        <FaChevronDown className={`w-4 h-4 transition-transform duration-300 ${mobileDropdownOpen[index] ? 'rotate-180' : ''
+                          }`} />
                       </button>
                       {mobileDropdownOpen[index] && (
                         <div className="pl-4 mt-2 space-y-2 border-l-2 border-gray-200">
@@ -208,6 +290,7 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                       )}
                     </div>
                   ) : (
+                    // Mobile Regular Link
                     <Link
                       to={link.href}
                       className={`block font-medium transition-colors duration-200 py-2 ${active ? 'text-[#009BE2]' : 'text-black hover:text-[#009BE2]'
@@ -223,6 +306,8 @@ const Navbar = ({ navbarData, storageUrl = '' }) => {
                 </li>
               );
             })}
+
+            {/* Mobile CTA Button */}
             {hasButton && (
               <li>
                 <Link

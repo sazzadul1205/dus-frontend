@@ -1,18 +1,58 @@
 // dus-frontend/src/Shared/TopBar.jsx
 
-// Icons - Import all needed icons
+/**
+ * ============================================
+ * TOP BAR - Utility Bar Component
+ * ============================================
+ * 
+ * PURPOSE:
+ * - Renders the top utility bar with contact info, language selector, search, and user menu
+ * - Provides quick access to key actions
+ * - Responsive: Desktop expanded, Mobile hamburger menu
+ * 
+ * SECTIONS:
+ * 1. Contact Info: Email, Phone, Hours
+ * 2. Language Selector: Switch between English and Bengali
+ * 3. Search: Expandable search bar
+ * 4. User Menu: Login/Register or Dashboard/Logout
+ * 5. Social Links: Facebook, Instagram, LinkedIn, Twitter/X
+ * 
+ * DATA STRUCTURE:
+ * {
+ *   contactInfo: {
+ *     email: { text, icon, alt },
+ *     phone: { text, icon, alt },
+ *     hours: { text, icon, alt }
+ *   },
+ *   languages: [{ code, name, flag }],
+ *   socialLinks: [{ id, iconName, url, name, hoverColor }],
+ *   userMenu: {
+ *     guest: [{ label, route, type }],
+ *     authenticated: [{ label, route, type, action, divider }]
+ *   }
+ * }
+ * 
+ * FEATURES:
+ * - Language persistence via localStorage
+ * - Click outside to close dropdowns
+ * - Expandable search with animation
+ * - User authentication state handling
+ * 
+ * ============================================
+ */
+
 import { FiSearch } from "react-icons/fi";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
 import { FaFacebook, FaInstagram, FaLinkedin, FaXTwitter, FaUser } from "react-icons/fa6";
 
-// React
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-// Image Component with Fallback
 import ImageWithFallback from './ImageWithFallback';
 
-// Utility function to check if value exists
+// ============================================
+// UTILITY: Check if value exists
+// ============================================
 const hasValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
@@ -21,7 +61,9 @@ const hasValue = (value) => {
   return true;
 };
 
-// Map icon names to components
+// ============================================
+// ICON MAPPING
+// ============================================
 const iconMap = {
   FaFacebook: FaFacebook,
   FaInstagram: FaInstagram,
@@ -29,9 +71,22 @@ const iconMap = {
   FaXTwitter: FaXTwitter
 };
 
+/**
+ * TopBar Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.topBarData - Top bar configuration data
+ * @param {string} props.storageUrl - Base URL for image storage
+ * @param {Object} props.auth - Authentication state (optional)
+ * 
+ * @returns {JSX.Element} Rendered top bar
+ */
 const TopBar = ({ topBarData, storageUrl = '', auth }) => {
   const user = auth?.user;
 
+  // ============================================
+  // STATE
+  // ============================================
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
@@ -40,10 +95,21 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
 
   const navigate = useNavigate();
 
+  // Refs for click-outside detection
   const langRef = useRef(null);
   const userRef = useRef(null);
   const searchRef = useRef(null);
 
+  // ============================================
+  // LANGUAGE SELECTION
+  // ============================================
+
+  /**
+   * Get initial language from localStorage or defaults
+   * - Check localStorage for saved preference
+   * - If not found, use English (us) as default
+   * - Only shows 'us' and 'bd' languages
+   */
   const getInitialLanguage = () => {
     if (!hasValue(topBarData)) {
       return {
@@ -79,16 +145,22 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
 
   const [selectedLanguage, setSelectedLanguage] = useState(getInitialLanguage);
 
+  // ============================================
+  // CLICK OUTSIDE DETECTION
+  // ============================================
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close search if clicked outside and no query
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         if (!searchQuery) {
           setIsSearchExpanded(false);
         }
       }
+      // Close language dropdown
       if (langRef.current && !langRef.current.contains(event.target)) {
         setIsLangDropdownOpen(false);
       }
+      // Close user dropdown
       if (userRef.current && !userRef.current.contains(event.target)) {
         setIsUserDropdownOpen(false);
       }
@@ -98,8 +170,14 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [searchQuery]);
 
+  // ============================================
+  // EARLY RETURN - No data
+  // ============================================
   if (!hasValue(topBarData)) return null;
 
+  // ============================================
+  // DESTRUCTURE DATA
+  // ============================================
   const {
     contactInfo = {},
     languages = [],
@@ -107,6 +185,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
     userMenu = {}
   } = topBarData;
 
+  // Default user menu if not provided
   const defaultUserMenu = {
     guest: [
       { label: 'Login', route: '/login', type: 'link' },
@@ -120,10 +199,22 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
   };
 
   const finalUserMenu = hasValue(userMenu) ? userMenu : defaultUserMenu;
+
+  // Filter to only show English and Bengali
   const languagesToShow = languages.filter(lang =>
     lang.code === 'us' || lang.code === 'bd'
   );
 
+  // ============================================
+  // HANDLERS
+  // ============================================
+
+  /**
+   * Handle language selection
+   * - Updates state
+   * - Saves to localStorage
+   * - Dispatches custom event for other components
+   */
   const handleLanguageSelect = (language) => {
     setSelectedLanguage(language);
     localStorage.setItem('selectedLanguage', JSON.stringify(language));
@@ -131,6 +222,11 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: language }));
   };
 
+  /**
+   * Handle search submission
+   * - Navigates to search results page
+   * - Closes search and clears query
+   */
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
@@ -138,10 +234,22 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
     setSearchQuery('');
   };
 
+  /**
+   * Handle logout
+   * - Navigates to login page
+   * TODO: Implement actual logout logic
+   */
   const handleLogout = () => {
     navigate('/login');
   };
 
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  /**
+   * Build image URL with storage path
+   */
   const getImageSrc = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -149,6 +257,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
     return imagePath;
   };
 
+  // Check for content
   const hasContactInfo = hasValue(contactInfo.email?.text) ||
     hasValue(contactInfo.phone?.text) ||
     hasValue(contactInfo.hours?.text);
@@ -158,10 +267,17 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
 
   if (!hasContactInfo && !hasSocialLinks && !hasLanguages) return null;
 
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <>
-      {/* Desktop Top Bar */}
+      {/* ============================================
+          DESKTOP TOP BAR
+          ============================================ */}
       <div className='hidden lg:flex justify-between items-center px-10 py-3 bg-[#080C14] relative z-50'>
+
+        {/* Left Side - Contact Info */}
         {hasContactInfo && (
           <div className='flex items-center space-x-6'>
             {hasValue(contactInfo.email?.text) && (
@@ -212,7 +328,10 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
           </div>
         )}
 
+        {/* Right Side - Language, Search, User, Social */}
         <div className="flex items-center gap-3 space-x-4">
+
+          {/* LANGUAGE SELECTOR */}
           {hasLanguages && (
             <div className="relative" ref={langRef}>
               <button
@@ -232,9 +351,13 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
                   />
                 )}
                 <span className="text-white text-sm hidden md:inline">{selectedLanguage.name}</span>
-                {isLangDropdownOpen ? <FaAngleUp className="text-white transition-transform duration-200" /> : <FaAngleDown className="text-white transition-transform duration-200" />}
+                {isLangDropdownOpen ?
+                  <FaAngleUp className="text-white transition-transform duration-200" /> :
+                  <FaAngleDown className="text-white transition-transform duration-200" />
+                }
               </button>
 
+              {/* Language Dropdown */}
               <div
                 className={`absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 w-40 z-50 transition-all duration-300 origin-top-right
                   ${isLangDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}
@@ -264,13 +387,16 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
             </div>
           )}
 
+          {/* Divider */}
           {hasLanguages && (hasSocialLinks || hasContactInfo) && (
             <div className="w-px h-5 bg-gray-600"></div>
           )}
 
+          {/* SEARCH */}
           <div className="relative" ref={searchRef}>
             <div className="overflow-hidden">
-              <div className={`transition-all duration-300 ease-in-out ${isSearchExpanded ? 'w-64 opacity-100' : 'w-6 opacity-100'}`}>
+              <div className={`transition-all duration-300 ease-in-out ${isSearchExpanded ? 'w-64 opacity-100' : 'w-6 opacity-100'
+                }`}>
                 {isSearchExpanded ? (
                   <form onSubmit={handleSearchSubmit} className="flex items-center animate-slideIn">
                     <input
@@ -301,8 +427,10 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
             </div>
           </div>
 
+          {/* Divider */}
           <div className="w-px h-5 bg-gray-600"></div>
 
+          {/* USER MENU */}
           <div className="relative" ref={userRef}>
             <button
               onClick={() => {
@@ -315,11 +443,13 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
               <FaUser className="text-xl text-white" />
             </button>
 
+            {/* User Dropdown */}
             <div
               className={`absolute top-full mt-2 right-0 bg-white rounded-md shadow-lg py-2 w-48 z-50 transition-all duration-300 origin-top-right
                 ${isUserDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}
             >
               {user ? (
+                // Authenticated User
                 <>
                   <div className="px-4 py-2 border-b border-gray-200">
                     <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -352,6 +482,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
                   ))}
                 </>
               ) : (
+                // Guest User
                 finalUserMenu.guest?.map((item) => (
                   <Link
                     key={item.label}
@@ -366,8 +497,10 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
             </div>
           </div>
 
+          {/* Divider before social links */}
           {hasSocialLinks && <div className="w-px h-5 bg-gray-600"></div>}
 
+          {/* SOCIAL LINKS */}
           {hasSocialLinks && socialLinks.map((social) => {
             const IconComponent = iconMap[social.iconName];
             if (!IconComponent) return null;
@@ -387,7 +520,9 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
         </div>
       </div>
 
-      {/* Mobile Top Bar */}
+      {/* ============================================
+          MOBILE TOP BAR
+          ============================================ */}
       <div className='lg:hidden bg-[#080C14] px-4 py-2 relative z-50'>
         <div className='flex justify-between items-center'>
           <button
@@ -407,10 +542,13 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
           </button>
         </div>
 
+        {/* Mobile Menu Content - Slide Down */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-150 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${isMobileMenuOpen ? 'max-h-150 opacity-100 mt-4' : 'max-h-0 opacity-0'
+            }`}
         >
           <div className="space-y-4 pb-4">
+            {/* Contact Info */}
             {hasContactInfo && (
               <div className="space-y-3">
                 {hasValue(contactInfo.email?.text) && (
@@ -459,6 +597,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
 
             {hasContactInfo && <div className="border-t border-gray-700"></div>}
 
+            {/* Search */}
             <form onSubmit={handleSearchSubmit} className="flex items-center">
               <input
                 type="text"
@@ -477,6 +616,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
 
             <div className="border-t border-gray-700"></div>
 
+            {/* Language Selector */}
             {hasLanguages && (
               <>
                 <div>
@@ -528,6 +668,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
               </>
             )}
 
+            {/* User Menu */}
             <div>
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
@@ -535,12 +676,16 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
               >
                 <FaUser className="text-white" />
                 <span>Account</span>
-                {isUserDropdownOpen ? <FaAngleUp className="text-white ml-auto" /> : <FaAngleDown className="text-white ml-auto" />}
+                {isUserDropdownOpen ?
+                  <FaAngleUp className="text-white ml-auto" /> :
+                  <FaAngleDown className="text-white ml-auto" />
+                }
               </button>
 
               {isUserDropdownOpen && (
                 <div className="mt-2 bg-white rounded-md shadow-lg py-2">
                   {user ? (
+                    // Authenticated User
                     <>
                       <div className="px-4 py-2 border-b border-gray-200">
                         <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -577,6 +722,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
                       ))}
                     </>
                   ) : (
+                    // Guest User
                     finalUserMenu.guest?.map((item) => (
                       <Link
                         key={item.label}
@@ -595,6 +741,7 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
               )}
             </div>
 
+            {/* Social Links */}
             {hasSocialLinks && <div className="border-t border-gray-700"></div>}
 
             {hasSocialLinks && (
@@ -621,6 +768,9 @@ const TopBar = ({ topBarData, storageUrl = '', auth }) => {
         </div>
       </div>
 
+      {/* ============================================
+          INLINE STYLES - Search Animation
+          ============================================ */}
       <style>{`
         @keyframes slideIn {
           from {
