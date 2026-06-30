@@ -2,13 +2,15 @@
 
 /**
  * ============================================
- * JOBS SECTION - Job Listings with Filter
+ * JOBS SECTION - Job Listings with Filter & Search
  * ============================================
  * 
  * PURPOSE:
- * - Displays job listings with filtering
+ * - Displays job listings with filtering and search
  * - Shows job type, department, location, title, description
  * - Filter dropdown for job types
+ * - Search input for job titles and descriptions
+ * - Auto-sorted by view count (most viewed first)
  * - "Apply Now" CTA for each job
  * 
  * DATA STRUCTURE:
@@ -29,13 +31,16 @@
  *       location: "Dhaka",
  *       title: "Program Officer",
  *       description: "Job description text...",
- *       link: "/apply"
+ *       link: "/apply",
+ *       views: 150
  *     }
  *   ]
  * }
  * 
  * FEATURES:
+ * - Search input for job title/description
  * - Filter dropdown with job types
+ * - Auto-sort by view count (most viewed first)
  * - Job cards with meta info (type, dept, location)
  * - "Apply Now" button with arrow icon
  * - "No jobs found" message when filtered
@@ -43,10 +48,11 @@
  * ============================================
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { LuBriefcaseBusiness, LuClock4 } from "react-icons/lu";
+import { FaSearch } from "react-icons/fa";
 import ArrowIcon from '../../Shared/ArrowIcon';
 
 // ============================================
@@ -82,19 +88,53 @@ const JobsSection = ({
   sectionId = 'jobs',
 }) => {
   // ============================================
-  // STATE - Filter selection
+  // STATE - Filter and Search
   // ============================================
-  const [selectedFilter, setSelectedFilter] = useState("");
+  const [selectedFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // ============================================
-  // EARLY RETURN - No data
+  // DESTRUCTURE DATA (BEFORE EARLY RETURN)
+  // ============================================
+  const { section = {}, filter = {}, jobs = [] } = data || {};
+
+  // ============================================
+  // FILTER & SEARCH LOGIC (BEFORE EARLY RETURN)
+  // ============================================
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Filter and search jobs - MOVED BEFORE EARLY RETURN
+  const processedJobs = useMemo(() => {
+    let result = [...jobs];
+
+    // Filter by type
+    if (selectedFilter !== "" && selectedFilter !== "all") {
+      result = result.filter(job =>
+        job.type?.toLowerCase().trim().replace(/\s+/g, "-") === selectedFilter
+      );
+    }
+
+    // Search by title or description
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(job =>
+        job.title?.toLowerCase().includes(query) ||
+        job.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort by view count (most viewed first)
+    result.sort((a, b) => (b.views || 0) - (a.views || 0));
+
+    return result;
+  }, [jobs, selectedFilter, searchQuery]);
+
+  // ============================================
+  // EARLY RETURN - No data (AFTER HOOKS)
   // ============================================
   if (!hasValue(data)) return null;
-
-  // ============================================
-  // DESTRUCTURE DATA
-  // ============================================
-  const { section = {}, filter = {}, jobs = [] } = data;
 
   // ============================================
   // CHECK FOR CONTENT
@@ -109,20 +149,6 @@ const JobsSection = ({
   if (!hasAnyContent) return null;
 
   // ============================================
-  // FILTER LOGIC
-  // ============================================
-  const handleFilterChange = (e) => {
-    setSelectedFilter(e.target.value);
-  };
-
-  // Filter jobs based on selected type
-  const filteredJobs = selectedFilter === "" || selectedFilter === "all"
-    ? jobs
-    : jobs.filter(job =>
-      job.type?.toLowerCase().trim().replace(/\s+/g, "-") === selectedFilter
-    );
-
-  // ============================================
   // RENDER
   // ============================================
   return (
@@ -131,7 +157,7 @@ const JobsSection = ({
       className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
     >
       {/* ============================================
-          HEADER - Title, Description, Filter
+          HEADER - Title, Description, Filter & Search
           ============================================ */}
       {(hasTitle || hasDescription || hasFilterOptions) && (
         <div className='flex flex-col lg:flex-row justify-between items-start lg:items-center pb-8 sm:pb-10 lg:pb-15 flex-wrap gap-5'>
@@ -152,46 +178,20 @@ const JobsSection = ({
             </div>
           )}
 
-          {/* Filter Dropdown */}
-          {hasFilterOptions && (
-            <div className="relative w-full lg:min-w-80 lg:w-auto">
-              <select
-                name="browseBy"
-                id="browseBy"
-                value={selectedFilter}
-                onChange={handleFilterChange}
-                className="w-full appearance-none border border-[#A3A3A3] rounded-[14px] bg-[#F5F5F5] px-5 sm:px-6 py-3 sm:py-4 pr-10 sm:pr-12 text-[14px] sm:text-[16px] font-600 text-[#515151] outline-none focus:border-[#009BE2] focus:ring-1 focus:ring-[#009BE2] cursor-pointer transition-all duration-300"
-              >
-                {filter.options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Custom dropdown arrow */}
-              <div className="pointer-events-none absolute right-3 sm:right-5 top-1/2 -translate-y-1/2">
-                <svg
-                  width="16"
-                  height="16"
-                  sm-width="18"
-                  sm-height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-[#979797]"
-                >
-                  <path
-                    d="M6 9L12 15L18 9"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+          {/* Right - Search & Filter */}
+          <div className='flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto'>
+            {/* Search Input */}
+            <div className="relative w-full sm:min-w-64 lg:min-w-72">
+              <input
+                type="text"
+                placeholder="Search jobs..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full border border-[#A3A3A3] rounded-[14px] bg-[#F5F5F5] px-5 py-3 sm:py-4 pl-11 text-[14px] sm:text-[16px] font-400 text-[#515151] outline-none focus:border-[#009BE2] focus:ring-1 focus:ring-[#009BE2] transition-all duration-300"
+              />
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#979797] text-sm" />
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -200,7 +200,7 @@ const JobsSection = ({
           ============================================ */}
       {hasJobs && (
         <div className='space-y-4 sm:space-y-5 lg:space-y-6'>
-          {filteredJobs.map((job) => (
+          {processedJobs.map((job) => (
             <div key={job.id} className='bg-white p-5 sm:p-6 md:p-8 lg:p-10 rounded-2xl hover:shadow-lg transition-all duration-300'>
               <div className='flex flex-col md:flex-row items-start justify-between gap-5'>
                 {/* Job Details */}
@@ -276,10 +276,10 @@ const JobsSection = ({
           ))}
 
           {/* No Jobs Message */}
-          {filteredJobs.length === 0 && (
+          {processedJobs.length === 0 && (
             <div className='bg-white p-8 sm:p-10 lg:p-12 rounded-2xl text-center'>
               <p className='text-[#515151] text-[16px] sm:text-[17px] lg:text-[18px] font-400'>
-                No jobs found for the selected filter.
+                {searchQuery || selectedFilter ? 'No jobs found matching your criteria.' : 'No jobs available at this time.'}
               </p>
             </div>
           )}

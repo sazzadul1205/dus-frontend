@@ -26,6 +26,7 @@
  * - HTML content truncation (9 lines max)
  * - Custom background color per program
  * - "Read More" links with arrow icon
+ * - Supports customProps for limit and showFeatured
  * 
  * ============================================
  */
@@ -70,8 +71,9 @@ const DEFAULT_SECTION = {
  * @param {string} props.paddingX - Horizontal padding
  * @param {string} props.sectionClassName - Additional CSS classes
  * @param {string} props.sectionId - Section ID (default: 'our-programs')
- * @param {number|null} props.limit - Max number of programs to show
- * @param {boolean} props.showFeatured - Show only featured programs
+ * @param {Object} props.customProps - Custom properties from the section config
+ * @param {number|null} props.limit - Max number of programs to show (legacy, prefer customProps)
+ * @param {boolean} props.showFeatured - Show only featured programs (legacy, prefer customProps)
  * @param {string} props.storageUrl - Base URL for image storage
  * 
  * @returns {JSX.Element} Rendered our programs section
@@ -84,10 +86,22 @@ const OurProgramsSection = ({
   paddingX = 'px-5 sm:px-10 md:px-20 lg:px-50',
   sectionClassName = '',
   sectionId = 'our-programs',
+  customProps = {},
   limit = null,
   showFeatured = false,
   storageUrl = '',
 }) => {
+  // ============================================
+  // EXTRACT SETTINGS FROM CUSTOM PROPS
+  // Priority: customProps > direct props > defaults
+  // ============================================
+  const effectiveLimit = customProps?.limit ?? limit ?? 3;
+  const effectiveShowFeatured = customProps?.showFeatured ?? showFeatured ?? true;
+  const effectiveBgColor = customProps?.bgColor ?? bgColor;
+  const effectivePaddingY = customProps?.paddingY ?? paddingY;
+  const effectivePaddingX = customProps?.paddingX ?? paddingX;
+  const effectiveSectionClassName = customProps?.sectionClassName ?? sectionClassName;
+
   // ============================================
   // STATE - Track which cards are visible
   // ============================================
@@ -185,16 +199,18 @@ const OurProgramsSection = ({
   // ============================================
   let displayPrograms = [...programList];
 
-  if (showFeatured) {
-    displayPrograms = displayPrograms.filter(p => p.is_featured === 1);
+  // Filter by featured status if enabled
+  if (effectiveShowFeatured) {
+    const featuredPrograms = displayPrograms.filter(p => p.is_featured === 1);
+    if (featuredPrograms.length > 0) {
+      displayPrograms = featuredPrograms;
+    }
+    // If no featured programs, show all (fallback)
   }
 
-  if (displayPrograms.length === 0 && showFeatured) {
-    displayPrograms = [...programList];
-  }
-
-  if (limit !== null && limit > 0) {
-    displayPrograms = displayPrograms.slice(0, limit);
+  // Apply limit
+  if (effectiveLimit !== null && effectiveLimit > 0) {
+    displayPrograms = displayPrograms.slice(0, effectiveLimit);
   }
 
   // ============================================
@@ -252,7 +268,7 @@ const OurProgramsSection = ({
   return (
     <section
       id={sectionId}
-      className={`${bgColor} ${paddingX} ${paddingY} ${sectionClassName}`}
+      className={`${effectiveBgColor} ${effectivePaddingX} ${effectivePaddingY} ${effectiveSectionClassName}`}
     >
       {/* ============================================
           HEADER

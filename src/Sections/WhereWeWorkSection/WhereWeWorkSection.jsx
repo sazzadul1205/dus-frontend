@@ -21,7 +21,7 @@
  * 
  * FEATURES:
  * - Two-column layout (left: stats, right: image)
- * - Stats with icons and values
+ * - Stats with icons and values (single column)
  * - Hover animations on stats (lift + shadow)
  * - Icon zoom on hover
  * 
@@ -89,6 +89,14 @@ const WhereWeWorkSection = ({
     return imagePath;
   };
 
+  // Determine grid columns based on number of stats
+  const getGridCols = () => {
+    if (stats.length <= 3) {
+      return 'grid-cols-1'; // Single column for 3 or fewer stats
+    }
+    return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'; // Multi-column for more than 3
+  };
+
   // ============================================
   // RENDER
   // ============================================
@@ -109,9 +117,9 @@ const WhereWeWorkSection = ({
             </h1>
           )}
 
-          {/* Stats Grid - 2 columns */}
+          {/* Stats Grid - Single column for 3 or fewer stats */}
           {stats.length > 0 && (
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6'>
+            <div className={`grid ${getGridCols()} gap-4 sm:gap-5 lg:gap-6`}>
               {stats.map((stat) => (
                 <div
                   key={stat.id}
