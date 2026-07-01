@@ -49,7 +49,7 @@ import useAxiosPublic from './hooks/useAxiosPublic';
 
 const Home = lazy(() => import('./pages/Home/Home'));
 const About = lazy(() => import('./pages/About/About'));
-const Blogs = lazy(() => import('./pages/Blogs/Blogs'));
+const Blog = lazy(() => import('./pages/Blogs/Blogs')); 
 const ContactUs = lazy(() => import('./pages/ContactUs/ContactUs'));
 const BlogDetails = lazy(() => import('./pages/BlogDetails/BlogDetails'));
 const AboutDetails = lazy(() => import('./pages/AboutDetails/AboutDetails'));
@@ -67,7 +67,7 @@ const PAGE_COMPONENTS = {
   'home': Home,
   'about': About,
   'about-details': AboutDetails,
-  'blogs': Blogs,
+  'blog': Blog, // Changed from 'blogs' to 'blog'
   'blog-details': BlogDetails,
   'contact': ContactUs,
   'projects-programs': ProjectsAndPrograms,
@@ -85,8 +85,8 @@ const ROUTE_PATHS = {
   'home': '/',
   'about': '/about',
   'about-details': '/about/:slug',      // Dynamic: /about/our-mission
-  'blogs': '/blogs',
-  'blog-details': '/blogs/:slug',       // Dynamic: /blogs/my-blog-post
+  'blog': '/blog', // Changed from '/blogs' to '/blog'
+  'blog-details': '/blog/:slug',       // Dynamic: /blog/my-blog-post
   'contact': '/contact',
   'projects-programs': '/projects-programs',
   'projects-programs-details': '/projects-programs/:slug', // Dynamic: /projects-programs/education
@@ -182,6 +182,8 @@ const usePageData = () => {
     retry: 2, // Retry twice on failure
   });
 };
+
+
 
 // ============================================
 // MAIN APP COMPONENT

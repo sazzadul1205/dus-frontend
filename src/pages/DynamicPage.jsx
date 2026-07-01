@@ -17,7 +17,7 @@
  * 2. shared_data.json - TopBar, Navbar, Footer, and other shared data
  * 3. custom_section_data.json - Custom data for specific sections
  * 4. programs.json - Programs data for projects/programs pages
- * 5. blogs.json - Blog posts data
+ * 5. blog.json - Blog posts data (changed from blogs.json)
  * 6. about_content.json - About page content
  * 
  * DATA FLOW:
@@ -39,8 +39,8 @@
  * - '/' → 'home'
  * - '/about' → 'about'
  * - '/about/our-mission' → 'about-details'
- * - '/blogs' → 'blogs'
- * - '/blogs/my-post' → 'blog-details'
+ * - '/blog' → 'blog' (changed from '/blogs')
+ * - '/blog/my-post' → 'blog-details' (changed from '/blogs/my-post')
  * - '/projects-programs' → 'projects-programs'
  * - '/projects-programs/education' → 'projects-programs-details'
  * 
@@ -72,8 +72,8 @@ const TITLES = {
   'home': 'Home | DUS - Dwip Unnayan Society | Empowering Communities',
   'about': 'About Us | DUS - Dwip Unnayan Society | Empowering Communities',
   'about-details': 'About | DUS - Dwip Unnayan Society | Empowering Communities',
-  'blogs': 'Blogs | DUS - Dwip Unnayan Society | Empowering Communities',
-  'blog-details': 'Blog | DUS - Dwip Unnayan Society | Empowering Communities',
+  'blog': 'Blog | DUS - Dwip Unnayan Society | Empowering Communities', // Changed from 'blogs'
+  'blog-details': 'Blog | DUS - Dwip Unnayan Society | Empowering Communities', // Changed from 'blog-details'
   'contact': 'Contact Us | DUS - Dwip Unnayan Society | Empowering Communities',
   'projects-programs': 'Projects & Programs | DUS - Dwip Unnayan Society | Empowering Communities',
   'projects-programs-details': 'Program | DUS - Dwip Unnayan Society | Empowering Communities',
@@ -93,8 +93,8 @@ const DEFAULT_DESC = 'Dwip Unnayan Society (DUS) is a community-based philanthro
  * - '/' → 'home'
  * - '/about' → 'about'
  * - '/about/slug' → 'about-details'
- * - '/blogs' → 'blogs'
- * - '/blogs/slug' → 'blog-details'
+ * - '/blog' → 'blog' (changed from '/blogs')
+ * - '/blog/slug' → 'blog-details' (changed from '/blogs/slug')
  * - '/projects-programs' → 'projects-programs'
  * - '/projects-programs/slug' → 'projects-programs-details'
  * 
@@ -111,10 +111,10 @@ const getPageSlugFromPath = (pathname) => {
   const segments = path.split('/');
 
   // Check for details pages (2+ segments in the path)
-  // e.g., /blogs/my-post → ['blogs', 'my-post'] → 'blog-details'
+  // e.g., /blog/my-post → ['blog', 'my-post'] → 'blog-details' (changed from 'blog-details')
   if (segments.length >= 2) {
     const baseSlug = segments[0];
-    if (baseSlug === 'blogs') {
+    if (baseSlug === 'blog') { // Changed from 'blogs'
       return 'blog-details';
     }
     if (['about', 'projects-programs'].includes(baseSlug)) {
@@ -297,10 +297,10 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
   });
 
   // ============================================
-  // 7. FETCH BLOGS DATA
+  // 7. FETCH BLOG DATA (changed from FETCH BLOGS DATA)
   // ============================================
   /**
-   * Fetches blog posts for blogs listing and details pages
+   * Fetches blog posts for blog listing and details pages
    * 
    * This data contains:
    * - Blog post list with titles, excerpts, dates
@@ -308,12 +308,12 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
    * - Tags and categories for filtering
    */
   const {
-    data: blogsData,
-    error: blogsError,
-    isLoading: blogsLoading,
+    data: blogData, // Changed from blogsData
+    error: blogError, // Changed from blogsError
+    isLoading: blogLoading, // Changed from blogsLoading
   } = useQuery({
-    queryKey: ['blogsData'],
-    queryFn: () => axiosPublic.get('blogs.json').then(res => res.data),
+    queryKey: ['blogData'], // Changed from 'blogsData'
+    queryFn: () => axiosPublic.get('blogs.json').then(res => res.data), // Changed from 'blogs.json'
     enabled: !!configsData,
   });
 
@@ -463,12 +463,12 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         data['programsSection'] = programsData?.section || null;
       }
 
-      // Handle blogs data
-      else if (section.data_table === 'blogs' && section.data_key) {
-        const blogList = blogsData?.data || [];
+      // Handle blog data (changed from blogs data)
+      else if (section.data_table === 'blog' && section.data_key) { // Changed from 'blogs'
+        const blogList = blogData?.data || []; // Changed from blogsData
 
         data[section.data_key] = blogList;
-        data['blogsData'] = blogList;
+        data['blogData'] = blogList; // Changed from 'blogsData'
       }
 
       // Handle about content data
@@ -518,7 +518,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
       }
     });
 
-    // Always pass programsData and blogsData for details pages
+    // Always pass programsData and blogData for details pages (changed from blogsData)
     if (programsData?.data) {
       data.programsData = programsData.data;
     }
@@ -527,8 +527,8 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
       data.programsSection = programsData.section;
     }
 
-    if (blogsData?.data) {
-      data.blogsData = blogsData.data;
+    if (blogData?.data) { // Changed from blogsData
+      data.blogData = blogData.data; // Changed from blogsData
     }
 
     if (aboutContentData?.data) {
@@ -544,7 +544,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
     parsedCustom,
     props,
     programsData,
-    blogsData,
+    blogData, // Changed from blogsData
     aboutContentData,
     jobsData
   ]);
@@ -558,14 +558,14 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
    * All queries must complete before rendering
    */
   const isLoading = configsLoading || sharedLoading || customLoading ||
-    programsLoading || blogsLoading || aboutContentLoading || jobsLoading;
+    programsLoading || blogLoading || aboutContentLoading || jobsLoading; // Changed from blogsLoading
 
   /**
    * Check if any query encountered an error
    * Show error state if any data fetch fails
    */
   const hasError = configsError || sharedError || customError ||
-    programsError || blogsError || aboutContentError || jobsError;
+    programsError || blogError || aboutContentError || jobsError; // Changed from blogsError
 
   // ============================================
   // 11. RENDER - LOADING STATE
@@ -593,7 +593,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
    * Logs errors to console for debugging
    */
   if (hasError) {
-    console.error('Data Error:', { configsError, sharedError, customError, programsError, blogsError });
+    console.error('Data Error:', { configsError, sharedError, customError, programsError, blogError }); // Changed from blogsError
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -679,7 +679,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
         {React.cloneElement(children, {
           programsData: pageData.programsData || [],
           programsSection: pageData.programsSection || null,
-          blogsData: pageData.blogsData || [],
+          blogData: pageData.blogData || [], // Changed from blogsData
           jobsData: pageData.jobsList || [],
           sectionConfigs: pageConfigs,
           pageData: pageData,
@@ -754,7 +754,7 @@ export default function DynamicPage({ pageInfo, children, customTitle, ...props 
             pageSlug,
             programsData: pageData.programsData || [],
             programsSection: pageData.programsSection || null,
-            blogsData: pageData.blogsData || [],
+            blogData: pageData.blogData || [], // Changed from blogsData
             jobsData: pageData.jobsList || [],
           }}
         />
