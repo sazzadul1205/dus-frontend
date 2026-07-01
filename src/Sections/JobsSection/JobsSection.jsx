@@ -48,11 +48,15 @@
  * ============================================
  */
 
+// React
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+
+// Icons
+import { FaSearch } from "react-icons/fa";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { LuBriefcaseBusiness, LuClock4 } from "react-icons/lu";
-import { FaSearch } from "react-icons/fa";
+
+// Components
 import ArrowIcon from '../../Shared/ArrowIcon';
 
 // ============================================
@@ -64,6 +68,38 @@ const hasValue = (value) => {
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === 'object') return Object.keys(value).length > 0;
   return true;
+};
+
+/**
+ * Get the API base URL from environment variables
+ */
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_PUBLIC_API_URL_JOBS || '';
+};
+
+/**
+ * Build the full job link URL
+ * @param {string} link - The job link from the API (e.g., "/jobs/slug" or "/apply")
+ * @param {string} slug - The job slug
+ * @returns {string} Full URL
+ */
+const buildJobLink = (link, slug) => {
+  const apiBaseUrl = getApiBaseUrl();
+
+  // If we have a link, use it with the API base URL
+  if (link) {
+    // Remove leading slash if present to avoid double slashes
+    const cleanLink = link.startsWith('/') ? link.substring(1) : link;
+    return `${apiBaseUrl}${cleanLink}`;
+  }
+
+  // Fallback: use slug if available
+  if (slug) {
+    return `${apiBaseUrl}${slug}`;
+  }
+
+  // Final fallback
+  return '#';
 };
 
 /**
@@ -200,80 +236,87 @@ const JobsSection = ({
           ============================================ */}
       {hasJobs && (
         <div className='space-y-4 sm:space-y-5 lg:space-y-6'>
-          {processedJobs.map((job) => (
-            <div key={job.id} className='bg-white p-5 sm:p-6 md:p-8 lg:p-10 rounded-2xl hover:shadow-lg transition-all duration-300'>
-              <div className='flex flex-col md:flex-row items-start justify-between gap-5'>
-                {/* Job Details */}
-                <div className='flex-1 w-full'>
+          {processedJobs.map((job) => {
+            // Build the job link using the API base URL
+            const jobLink = buildJobLink(job.link, job.slug);
 
-                  {/* Job Meta Info (Type, Department, Location) */}
-                  {(hasValue(job.type) || hasValue(job.department) || hasValue(job.location)) && (
-                    <div className='flex items-center gap-2 sm:gap-3 text-[#524B48] text-[12px] sm:text-[14px] font-400 uppercase mb-3 flex-wrap'>
+            return (
+              <div key={job.id} className='bg-white p-5 sm:p-6 md:p-8 lg:p-10 rounded-2xl hover:shadow-lg transition-all duration-300'>
+                <div className='flex flex-col md:flex-row items-start justify-between gap-5'>
+                  {/* Job Details */}
+                  <div className='flex-1 w-full'>
 
-                      {/* Job Type */}
-                      {hasValue(job.type) && (
-                        <>
+                    {/* Job Meta Info (Type, Department, Location) */}
+                    {(hasValue(job.type) || hasValue(job.department) || hasValue(job.location)) && (
+                      <div className='flex items-center gap-2 sm:gap-3 text-[#524B48] text-[12px] sm:text-[14px] font-400 uppercase mb-3 flex-wrap'>
+
+                        {/* Job Type */}
+                        {hasValue(job.type) && (
+                          <>
+                            <p className='flex items-center gap-1 sm:gap-1.5'>
+                              <LuClock4 className="text-[12px] sm:text-[14px]" />
+                              {job.type}
+                            </p>
+                            {(hasValue(job.department) || hasValue(job.location)) && (
+                              <span className='w-1 h-px bg-[#524B48] block'></span>
+                            )}
+                          </>
+                        )}
+
+                        {/* Department */}
+                        {hasValue(job.department) && (
+                          <>
+                            <p className='flex items-center gap-1 sm:gap-1.5'>
+                              <LuBriefcaseBusiness className="text-[12px] sm:text-[14px]" />
+                              {job.department}
+                            </p>
+                            {hasValue(job.location) && (
+                              <span className='w-1 h-px bg-[#524B48] block'></span>
+                            )}
+                          </>
+                        )}
+
+                        {/* Location */}
+                        {hasValue(job.location) && (
                           <p className='flex items-center gap-1 sm:gap-1.5'>
-                            <LuClock4 className="text-[12px] sm:text-[14px]" />
-                            {job.type}
+                            <HiOutlineLocationMarker className="text-[12px] sm:text-[14px]" />
+                            {job.location}
                           </p>
-                          {(hasValue(job.department) || hasValue(job.location)) && (
-                            <span className='w-1 h-px bg-[#524B48] block'></span>
-                          )}
-                        </>
-                      )}
+                        )}
+                      </div>
+                    )}
 
-                      {/* Department */}
-                      {hasValue(job.department) && (
-                        <>
-                          <p className='flex items-center gap-1 sm:gap-1.5'>
-                            <LuBriefcaseBusiness className="text-[12px] sm:text-[14px]" />
-                            {job.department}
-                          </p>
-                          {hasValue(job.location) && (
-                            <span className='w-1 h-px bg-[#524B48] block'></span>
-                          )}
-                        </>
-                      )}
+                    {/* Job Title */}
+                    {hasValue(job.title) && (
+                      <h3 className='text-[#080C14] text-[22px] sm:text-[26px] md:text-[28px] lg:text-[32px] font-600 mb-2 sm:mb-3 leading-tight'>
+                        {job.title}
+                      </h3>
+                    )}
 
-                      {/* Location */}
-                      {hasValue(job.location) && (
-                        <p className='flex items-center gap-1 sm:gap-1.5'>
-                          <HiOutlineLocationMarker className="text-[12px] sm:text-[14px]" />
-                          {job.location}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    {/* Job Description */}
+                    {hasValue(job.description) && (
+                      <p className='text-[#524B48] text-[15px] sm:text-[16px] md:text-[17px] lg:text-[18px] font-400 leading-relaxed'>
+                        {job.description}
+                      </p>
+                    )}
+                  </div>
 
-                  {/* Job Title */}
-                  {hasValue(job.title) && (
-                    <h3 className='text-[#080C14] text-[22px] sm:text-[26px] md:text-[28px] lg:text-[32px] font-600 mb-2 sm:mb-3 leading-tight'>
-                      {job.title}
-                    </h3>
-                  )}
-
-                  {/* Job Description */}
-                  {hasValue(job.description) && (
-                    <p className='text-[#524B48] text-[15px] sm:text-[16px] md:text-[17px] lg:text-[18px] font-400 leading-relaxed'>
-                      {job.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Apply Button */}
-                <div className='w-full md:w-auto mt-4 md:mt-0'>
-                  <Link
-                    to={job.link || '#'}
-                    className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-3.5 lg:py-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center justify-center gap-2 sm:gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap w-full md:w-auto"
-                  >
-                    Apply Now
-                    <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
-                  </Link>
+                  {/* Apply Button */}
+                  <div className='w-full md:w-auto mt-4 md:mt-0'>
+                    <a
+                      href={jobLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bricolage-grotesque border border-[#009BE2] rounded-md text-[#009BE2] px-5 sm:px-6 lg:px-7.5 py-3 sm:py-3.5 lg:py-4 font-600 text-[14px] sm:text-[15px] lg:text-[16px] inline-flex items-center justify-center gap-2 sm:gap-3 group hover:bg-[#009BE2] hover:text-white transition-all duration-300 whitespace-nowrap w-full md:w-auto"
+                    >
+                      Apply Now
+                      <ArrowIcon className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* No Jobs Message */}
           {processedJobs.length === 0 && (
